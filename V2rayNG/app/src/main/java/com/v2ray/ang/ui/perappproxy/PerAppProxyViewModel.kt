@@ -5,6 +5,7 @@ import android.content.Context
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.dto.AppInfo
 import com.v2ray.ang.dto.UrlContentRequest
+import com.v2ray.ang.handler.FetchRoutePolicy
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsChangeManager
 import com.v2ray.ang.handler.SettingsManager
@@ -45,6 +46,10 @@ class PerAppProxyViewModel(application: Application) : BaseViewModel(application
         MmkvManager.decodeSettingsBool(AppConfig.PREF_BYPASS_APPS, false)
     )
     val bypassApps: StateFlow<Boolean> = _bypassApps.asStateFlow()
+
+    // The list failed to download through the proxy; a direct retry is offered
+    private val _directRetryOffered = MutableStateFlow(false)
+    internal val directRetryOffered: StateFlow<Boolean> = _directRetryOffered.asStateFlow()
 
     // Cached full list for filtering
     private var appsAll: List<AppInfo>? = null
@@ -165,22 +170,31 @@ class PerAppProxyViewModel(application: Application) : BaseViewModel(application
     }
 
     fun selectProxyAppAuto(context: Context) {
+        selectProxyAppAuto(context, FetchRoutePolicy.Trigger.USER)
+    }
+
+    /** The user chose to download the list directly after it failed through the proxy. */
+    internal fun retrySelectProxyAppAutoDirect(context: Context) {
+        _directRetryOffered.value = false
+        selectProxyAppAuto(context, FetchRoutePolicy.Trigger.USER_CONFIRMED_DIRECT)
+    }
+
+    internal fun dismissDirectRetry() {
+        _directRetryOffered.value = false
+    }
+
+    private fun selectProxyAppAuto(context: Context, trigger: FetchRoutePolicy.Trigger) {
         val applicationContext = context.applicationContext
         launchLoading {
             val url = AppConfig.ANDROID_PACKAGE_NAME_LIST_URL
-            var content = withContext(Dispatchers.IO) {
-                HttpUtil.getUrlContent(
-                    UrlContentRequest(
-                        url = url,
-                        timeout = 5000
-                    )
-                )
-            }
-            if (content.isNullOrEmpty()) {
-                val proxyUsername = SettingsManager.getSocksUsername()
-                val proxyPassword = SettingsManager.getSocksPassword()
-                val httpPort = SettingsManager.getHttpPort()
-                content = withContext(Dispatchers.IO) {
+            val proxyUsername = SettingsManager.getSocksUsername()
+            val proxyPassword = SettingsManager.getSocksPassword()
+            // Upstream's order: directly, then through the proxy.
+            val outcome = withContext(Dispatchers.IO) {
+                FetchRoutePolicy.fetch(
+                    trigger,
+                    listOf(FetchRoutePolicy.Route.DIRECT, FetchRoutePolicy.Route.PROXY)
+                ) { httpPort ->
                     HttpUtil.getUrlContent(
                         UrlContentRequest(
                             url = url,
@@ -189,9 +203,14 @@ class PerAppProxyViewModel(application: Application) : BaseViewModel(application
                             proxyUsername = proxyUsername,
                             proxyPassword = proxyPassword
                         )
-                    )
-                } ?: ""
+                    ).takeIf { !it.isNullOrEmpty() }
+                }
             }
+            if (outcome is FetchRoutePolicy.Outcome.Failed && outcome.canRetryDirect) {
+                _directRetryOffered.value = true
+            }
+            // Empty falls back to the list bundled with the app.
+            val content = (outcome as? FetchRoutePolicy.Outcome.Fetched)?.value ?: ""
             val success = applyProxyAppList(
                 content = content,
                 context = applicationContext,

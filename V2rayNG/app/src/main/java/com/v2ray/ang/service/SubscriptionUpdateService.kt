@@ -14,6 +14,7 @@ import com.v2ray.ang.enums.NotificationChannelType
 import com.v2ray.ang.extension.serializable
 import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.handler.AppLocaleManager
+import com.v2ray.ang.handler.FetchRoutePolicy
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.helper.NotificationHelper
 import com.v2ray.ang.util.LogUtil
@@ -97,7 +98,7 @@ class SubscriptionUpdateService : Service() {
             updateSemaphore.withPermit {
                 try {
                     message.subIds.forEach { subId ->
-                        updateSingle(subId, message.forcedUpdate)
+                        updateSingle(subId, message.forcedUpdate, message.interactive)
                     }
                 } catch (e: Exception) {
                     LogUtil.e(AppConfig.TAG, "SubscriptionUpdateService update failed", e)
@@ -111,7 +112,7 @@ class SubscriptionUpdateService : Service() {
         }
     }
 
-    private suspend fun updateSingle(subId: String, forcedUpdate: Boolean) {
+    private suspend fun updateSingle(subId: String, forcedUpdate: Boolean, interactive: Boolean) {
         val subItem = MmkvManager.decodeSubscription(subId) ?: return
         if (!subItem.enabled || subItem.url.isEmpty()) {
             return
@@ -127,7 +128,9 @@ class SubscriptionUpdateService : Service() {
         )
 
         if (forcedUpdate || MmkvManager.decodeSettingsBool(AppConfig.PREF_UPDATE_SUBSCRIPTION, false)) {
-            AngConfigManager.updateConfigViaSub(sub)
+            // A scheduled update never goes direct; one the user started may (FetchRoutePolicy).
+            val trigger = if (interactive) FetchRoutePolicy.Trigger.USER else FetchRoutePolicy.Trigger.BACKGROUND
+            AngConfigManager.updateConfigViaSub(sub, trigger)
         }
 
         if (MmkvManager.decodeSettingsBool(AppConfig.PREF_AUTO_TEST_AFTER_UPDATE_SUBSCRIPTION, false)) {

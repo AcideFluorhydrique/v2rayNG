@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Forkray-only strings, kept out of strings.xml so upstream changes to it merge cleanly. -->
+<resources>
+    <string name="fetch_direct_notice">Not connected: fetched directly, without the proxy</string>
+    <string name="fetch_direct_retry_title">Failed through the proxy</string>
+    <string name="fetch_direct_retry_message">Retry without the proxy? The request then goes out directly: the server sees your real IP address, and your network can see which server you contacted.</string>
+    <string name="fetch_direct_retry_confirm">Retry directly</string>
+</resources>

@@ -194,7 +194,8 @@ object AngConfigManager {
                 countSub = parseBatchSubscription(Utils.decode(server))
             }
             if (countSub > 0) {
-                updateConfigViaSubAll()
+                // Every caller imports on the user's request.
+                updateConfigViaSubAll(FetchRoutePolicy.Trigger.USER)
             }
 
             count to countSub
@@ -438,13 +439,16 @@ object AngConfigManager {
     /**
      * Updates the configuration via all subscriptions.
      *
+     * @param trigger Who started the update, which decides whether it may go direct.
      * @return Detailed result of the subscription update operation.
      */
-    fun updateConfigViaSubAll(): SubscriptionUpdateResult {
+    fun updateConfigViaSubAll(
+        trigger: FetchRoutePolicy.Trigger = FetchRoutePolicy.Trigger.BACKGROUND
+    ): SubscriptionUpdateResult {
         return try {
             val subscriptions = MmkvManager.decodeSubscriptions()
             subscriptions.fold(SubscriptionUpdateResult()) { acc, subscription ->
-                acc + updateConfigViaSub(subscription)
+                acc + updateConfigViaSub(subscription, trigger)
             }
         } catch (e: Exception) {
             LogUtil.e(AppConfig.TAG, "Failed to update config via all subscriptions", e)
@@ -456,9 +460,13 @@ object AngConfigManager {
      * Updates the configuration via a subscription.
      *
      * @param it The subscription item.
+     * @param trigger Who started the update, which decides whether it may go direct.
      * @return Subscription update result.
      */
-    fun updateConfigViaSub(it: SubscriptionCache): SubscriptionUpdateResult {
+    fun updateConfigViaSub(
+        it: SubscriptionCache,
+        trigger: FetchRoutePolicy.Trigger = FetchRoutePolicy.Trigger.BACKGROUND
+    ): SubscriptionUpdateResult {
         try {
             // Check if disabled
             if (!it.subscription.enabled) {
@@ -488,8 +496,11 @@ object AngConfigManager {
             val proxyUsername = SettingsManager.getSocksUsername()
             val proxyPassword = SettingsManager.getSocksPassword()
 
-            var configText = try {
-                val httpPort = SettingsManager.getHttpPort()
+            // Upstream's order: through the proxy, then directly.
+            val outcome = FetchRoutePolicy.fetch(
+                trigger,
+                listOf(FetchRoutePolicy.Route.PROXY, FetchRoutePolicy.Route.DIRECT)
+            ) { httpPort ->
                 HttpUtil.getUrlContentWithUserAgent(
                     UrlContentRequest(
                         url = url,
@@ -500,27 +511,15 @@ object AngConfigManager {
                         proxyUsername = proxyUsername,
                         proxyPassword = proxyPassword
                     )
+                ).takeIf { text -> text.isNotEmpty() }
+            }
+            val configText = when (outcome) {
+                is FetchRoutePolicy.Outcome.Fetched -> outcome.value
+                FetchRoutePolicy.Outcome.SkippedNoProxy -> return SubscriptionUpdateResult(skipCount = 1)
+                is FetchRoutePolicy.Outcome.Failed -> return SubscriptionUpdateResult(
+                    failureCount = 1,
+                    directRetrySubIds = if (outcome.canRetryDirect) listOf(it.guid) else emptyList()
                 )
-            } catch (e: Exception) {
-                LogUtil.e(AppConfig.ANG_PACKAGE, "Update subscription: proxy not ready or other error", e)
-                ""
-            }
-            if (configText.isEmpty()) {
-                configText = try {
-                    HttpUtil.getUrlContentWithUserAgent(
-                        UrlContentRequest(
-                            url = url,
-                            userAgent = userAgent,
-                            requestHeaders = requestHeaders
-                        )
-                    )
-                } catch (e: Exception) {
-                    LogUtil.e(AppConfig.TAG, "Update subscription: Failed to get URL content with user agent", e)
-                    ""
-                }
-            }
-            if (configText.isEmpty()) {
-                return SubscriptionUpdateResult(failureCount = 1)
             }
 
             val count = parseConfigViaSub(configText, it.guid, false)

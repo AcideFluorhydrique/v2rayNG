@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Forkray-only strings, kept out of strings.xml so upstream changes to it merge cleanly. -->
+<resources>
+    <string name="fetch_direct_notice">未连接：已直接获取，未经过代理</string>
+    <string name="fetch_direct_retry_title">通过代理获取失败</string>
+    <string name="fetch_direct_retry_message">是否不经代理重试？请求将直接发出：服务器会看到你的真实 IP 地址，你所在的网络也能看到你连接了哪个服务器。</string>
+    <string name="fetch_direct_retry_confirm">直接重试</string>
+</resources>

@@ -52,12 +52,14 @@ import com.v2ray.ang.dto.entities.AssetUrlItem
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.extension.toastError
 import com.v2ray.ang.extension.toastSuccess
+import com.v2ray.ang.handler.FetchRoutePolicy
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.ui.base.HelperBaseComponentActivity
 import com.v2ray.ang.ui.compose.AppDropdownMenuItems
 import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.DeleteConfirmDialog
+import com.v2ray.ang.ui.compose.DirectRetryDialog
 import com.v2ray.ang.ui.compose.ItemDivider
 import com.v2ray.ang.ui.compose.NavigationBarsBottomPadding
 import com.v2ray.ang.ui.compose.SettingsListItem
@@ -97,6 +99,15 @@ class UserAssetActivity : HelperBaseComponentActivity() {
         val isLoading by isLoadingState.collectAsStateWithLifecycle()
         val geoFilesSource by geoFilesSourceState.collectAsStateWithLifecycle()
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        val directRetryGuids by viewModel.directRetryGuids.collectAsStateWithLifecycle()
+        if (directRetryGuids.isNotEmpty()) {
+            DirectRetryDialog(
+                onRetryDirect = {
+                    downloadGeoFiles(FetchRoutePolicy.Trigger.USER_CONFIRMED_DIRECT, viewModel.takeDirectRetry())
+                },
+                onDismiss = viewModel::dismissDirectRetry
+            )
+        }
         UserAssetScreen(
             uiState = uiState,
             isLoading = isLoading,
@@ -209,17 +220,20 @@ class UserAssetActivity : HelperBaseComponentActivity() {
         return true
     }
 
-    private fun downloadGeoFiles() {
+    private fun downloadGeoFiles(
+        trigger: FetchRoutePolicy.Trigger = FetchRoutePolicy.Trigger.USER,
+        onlyGuids: List<String>? = null
+    ) {
+        if (onlyGuids != null && onlyGuids.isEmpty()) return
         isLoadingState.value = true
         toast(R.string.msg_downloading_content)
 
         val proxyUsername = SettingsManager.getSocksUsername()
         val proxyPassword = SettingsManager.getSocksPassword()
-        val httpPort = SettingsManager.getHttpPort()
         lifecycleScope.launch {
             refreshData().join()
             val result = withContext(Dispatchers.IO) {
-                viewModel.downloadGeoFiles(extDir, httpPort, proxyUsername, proxyPassword)
+                viewModel.downloadGeoFiles(extDir, proxyUsername, proxyPassword, trigger, onlyGuids)
             }
             if (result.successCount > 0) {
                 toast(

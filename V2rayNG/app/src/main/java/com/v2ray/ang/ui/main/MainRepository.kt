@@ -19,6 +19,7 @@ import com.v2ray.ang.dto.entities.SubscriptionItem
 import com.v2ray.ang.extension.serializable
 import com.v2ray.ang.handler.AngConfigManager
 import com.v2ray.ang.handler.AppLocaleManager
+import com.v2ray.ang.handler.FetchRoutePolicy
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
 import com.v2ray.ang.handler.SubscriptionUpdater
@@ -192,11 +193,11 @@ class MainRepository(
         updateUI: Boolean
     ): Pair<Int, Int> = AngConfigManager.importBatchConfig(server, subscriptionId, updateUI)
 
-    override fun updateConfigViaSubAll(): SubscriptionUpdateResult =
-        AngConfigManager.updateConfigViaSubAll()
+    override fun updateConfigViaSubAll(trigger: FetchRoutePolicy.Trigger): SubscriptionUpdateResult =
+        AngConfigManager.updateConfigViaSubAll(trigger)
 
-    override fun updateConfigViaSub(subscriptionCache: SubscriptionCache): SubscriptionUpdateResult =
-        AngConfigManager.updateConfigViaSub(subscriptionCache)
+    override fun updateConfigViaSub(subscriptionCache: SubscriptionCache, trigger: FetchRoutePolicy.Trigger): SubscriptionUpdateResult =
+        AngConfigManager.updateConfigViaSub(subscriptionCache, trigger)
 
     override fun shareNonCustomConfigsToClipboard(guids: List<String>): Int =
         AngConfigManager.shareNonCustomConfigsToClipboard(app, guids)

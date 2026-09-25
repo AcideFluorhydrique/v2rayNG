@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Forkray-only strings, kept out of strings.xml so upstream changes to it merge cleanly. -->
+<resources>
+    <string name="fetch_direct_notice">Chưa kết nối: đã tải trực tiếp, không qua proxy</string>
+    <string name="fetch_direct_retry_title">Tải qua proxy thất bại</string>
+    <string name="fetch_direct_retry_message">Thử lại mà không qua proxy? Yêu cầu sẽ được gửi trực tiếp: máy chủ sẽ thấy địa chỉ IP thật của bạn, và mạng của bạn có thể thấy bạn đã kết nối tới máy chủ nào.</string>
+    <string name="fetch_direct_retry_confirm">Thử lại trực tiếp</string>
+</resources>

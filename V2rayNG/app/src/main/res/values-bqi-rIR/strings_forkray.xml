@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Forkray-only strings, kept out of strings.xml so upstream changes to it merge cleanly. -->
+<!-- Persian text until a Bakhtiari translation is available. -->
+<resources>
+    <string name="fetch_direct_notice">متصل نیستید: مستقیم و بدون پروکسی دریافت شد</string>
+    <string name="fetch_direct_retry_title">دریافت از طریق پروکسی ناموفق بود</string>
+    <string name="fetch_direct_retry_message">بدون پروکسی دوباره تلاش شود؟ درخواست مستقیم ارسال می‌شود: سرور نشانی IP واقعی شما را می‌بیند و شبکهٔ شما می‌تواند ببیند به کدام سرور وصل شده‌اید.</string>
+    <string name="fetch_direct_retry_confirm">تلاش مستقیم</string>
+</resources>

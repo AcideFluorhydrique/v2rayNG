@@ -76,12 +76,16 @@ android {
             // address is stored base64-encoded (AppConfig.APP_PROMOTION_URL).
             // This build does not carry it.
             buildConfigField("boolean", "PROMOTION_ENABLED", "false")
+            // The app's own requests (subscriptions, geo files, the per-app list) never
+            // switch to a direct connection silently: see handler/FetchRoutePolicy.kt.
+            buildConfigField("boolean", "STRICT_PROXY_FETCH", "true")
         }
         create("playstore") {
             dimension = "distribution"
             buildConfigField("String", "DISTRIBUTION", "\"Play Store\"")
             buildConfigField("boolean", "UPDATE_CHECK_ENABLED", "true")
             buildConfigField("boolean", "PROMOTION_ENABLED", "true")
+            buildConfigField("boolean", "STRICT_PROXY_FETCH", "false")
         }
     }
 

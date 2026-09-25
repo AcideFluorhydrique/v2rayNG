@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v2ray.ang.dto.entities.ProfileItem
+import com.v2ray.ang.ui.compose.DirectRetryDialog
 import com.v2ray.ang.ui.compose.LocalDarkTheme
 import com.v2ray.ang.ui.compose.QRCodeDialog
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -121,6 +122,13 @@ fun MainScreen(
         onDismissRemove = { showRemoveConfirm = null },
         onConfirmRemove = { guid -> showRemoveConfirm = null; onAction(MainAction.RemoveServer(guid)) }
     )
+
+    if (uiState.directRetrySubIds.isNotEmpty()) {
+        DirectRetryDialog(
+            onRetryDirect = { onAction(MainAction.RetrySubscriptionsDirect) },
+            onDismiss = { onAction(MainAction.DismissDirectRetry) }
+        )
+    }
 
     if (shareTarget != null) {
         val (guid, profile, more) = shareTarget!!

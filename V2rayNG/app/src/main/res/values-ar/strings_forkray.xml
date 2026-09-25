@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Forkray-only strings, kept out of strings.xml so upstream changes to it merge cleanly. -->
+<resources>
+    <string name="fetch_direct_notice">غير متصل: تم الجلب مباشرةً دون الوكيل</string>
+    <string name="fetch_direct_retry_title">فشل الجلب عبر الوكيل</string>
+    <string name="fetch_direct_retry_message">هل تريد إعادة المحاولة دون الوكيل؟ سيُرسَل الطلب مباشرةً: سيرى الخادم عنوان IP الحقيقي الخاص بك، ويمكن لشبكتك أن ترى الخادم الذي اتصلت به.</string>
+    <string name="fetch_direct_retry_confirm">إعادة المحاولة مباشرةً</string>
+</resources>
