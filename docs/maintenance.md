@@ -29,7 +29,7 @@ pin-report.yml (weekly) ──▶ issue when Go, a JDK, the NDK or geo data fall
 | --- | --- | --- |
 | `fdroid-source-build.yml` | pushes and PRs to `master`; manually | Builds the F-Droid flavor from source, runs the unit tests for both flavors, publishes the build manifest. Unsigned. |
 | `upstream-sync.yml` | every 6 hours; manually | Proposes the newest upstream release as a PR, or an issue if it conflicts. Never merges. |
-| `release.yml` | a pushed tag `v*` | Signed build, GitHub release, F-Droid repository. |
+| `release.yml` | a pushed tag `v*`; manually | Signed build, GitHub release, F-Droid repository; refuses a version already published. Run manually, only rebuilds the F-Droid repository. |
 | `pin-report.yml` | weekly; manually | Keeps one issue listing pins that have fallen behind. |
 | `build.yml` ("Build APK") | upstream's | Needs upstream's signing key; **disable it** (below). It stays in the tree because deleting it would conflict with every upstream change to it. |
 
@@ -114,6 +114,26 @@ All of this is under the repository's **Settings**.
    The tag must be `v` followed by the `versionName` in
    `V2rayNG/app/build.gradle.kts`, on a commit that is on `master`;
    `release.yml` refuses anything else.
+
+A version is released once. When its APKs are on its GitHub release,
+`release.yml` refuses to build that tag again, even if the tag is moved to
+another commit: people have already downloaded those APKs and checked them
+against a build manifest naming their commit, and one version number with two
+different sources is what makes a release unverifiable. If a release run
+fails:
+
+- **before the APKs were uploaded** (the build, or the signature check): fix
+  the cause on `master`, then move the tag there and push it again
+  (`git tag -f vX.Y.Z origin/master && git push -f origin refs/tags/vX.Y.Z`).
+  The release has no APKs yet, so this is allowed.
+- **while publishing the F-Droid repository**: the release itself is done.
+  Fix the configuration on `master`, then run *Release* manually from the
+  Actions tab on `master`. A manual run only rebuilds the repository from the
+  published releases, with that configuration.
+
+To retry a run without changes (a network error, say), use *Re-run failed
+jobs*. *Re-run all jobs* repeats the tag check, which refuses the version once
+its APKs are out.
 
 Not every upstream release has to be published. Ones that only touch the UI
 can be batched; ones that update the core should not be.
