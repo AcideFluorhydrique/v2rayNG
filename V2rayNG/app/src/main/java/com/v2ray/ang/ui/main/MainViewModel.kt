@@ -10,6 +10,7 @@ import com.v2ray.ang.dto.ConnectionTestResult
 import com.v2ray.ang.dto.GroupMapItem
 import com.v2ray.ang.dto.LocateTarget
 import com.v2ray.ang.dto.RealPingResult
+import com.v2ray.ang.dto.SubscriptionUpdateResult
 import com.v2ray.ang.dto.TestServiceMessage
 import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.dto.entities.ServersCache
@@ -18,6 +19,7 @@ import com.v2ray.ang.extension.delay
 import com.v2ray.ang.extension.isComplexType
 import com.v2ray.ang.extension.matchesPattern
 import com.v2ray.ang.extension.moveItem
+import com.v2ray.ang.handler.FetchRoutePolicy
 import com.v2ray.ang.ui.base.BaseViewModel
 import com.v2ray.ang.util.LogUtil
 import kotlinx.coroutines.CancellationException
@@ -284,6 +286,8 @@ class MainViewModel(
             MainAction.RemoveInvalidServers -> removeInvalidServerAsync()
             MainAction.SortByTestResults -> sortByTestResultsAsync()
             MainAction.UpdateSubscriptions -> importConfigViaSub()
+            MainAction.RetrySubscriptionsDirect -> retrySubscriptionsDirect()
+            MainAction.DismissDirectRetry -> _uiState.update { it.copy(directRetrySubIds = emptyList()) }
             MainAction.ExportAll -> exportAllAsync()
             is MainAction.SelectGroup -> subscriptionIdChanged(action.groupId)
             is MainAction.SelectServer -> updateSelectedGuid(action.guid)
@@ -534,15 +538,37 @@ class MainViewModel(
 
     private fun importConfigViaSub() {
         val subId = uiState.value.selectedGroupId
+        updateSubscriptions(FetchRoutePolicy.Trigger.USER) {
+            if (subId.isEmpty()) {
+                dataSource.updateConfigViaSubAll(FetchRoutePolicy.Trigger.USER)
+            } else {
+                val item = dataSource.getSubscriptionItem(subId) ?: return@updateSubscriptions null
+                dataSource.updateConfigViaSub(SubscriptionCache(subId, item), FetchRoutePolicy.Trigger.USER)
+            }
+        }
+    }
+
+    /** The user chose to fetch the subscriptions that failed through the proxy directly. */
+    private fun retrySubscriptionsDirect() {
+        val subIds = uiState.value.directRetrySubIds
+        _uiState.update { it.copy(directRetrySubIds = emptyList()) }
+        if (subIds.isEmpty()) return
+        updateSubscriptions(FetchRoutePolicy.Trigger.USER_CONFIRMED_DIRECT) {
+            subIds.fold(SubscriptionUpdateResult()) { acc, id ->
+                val item = dataSource.getSubscriptionItem(id) ?: return@fold acc
+                acc + dataSource.updateConfigViaSub(SubscriptionCache(id, item), FetchRoutePolicy.Trigger.USER_CONFIRMED_DIRECT)
+            }
+        }
+    }
+
+    private fun updateSubscriptions(
+        trigger: FetchRoutePolicy.Trigger,
+        update: () -> SubscriptionUpdateResult?
+    ) {
         launchLoading {
             withContext(ioDispatcher) {
                 try {
-                    val result = if (subId.isEmpty()) {
-                        dataSource.updateConfigViaSubAll()
-                    } else {
-                        val item = dataSource.getSubscriptionItem(subId) ?: return@withContext
-                        dataSource.updateConfigViaSub(SubscriptionCache(subId, item))
-                    }
+                    val result = update() ?: return@withContext
                     when {
                         result.successCount + result.failureCount + result.skipCount == 0 ->
                             toast(R.string.title_update_subscription_no_subscription)
@@ -563,10 +589,13 @@ class MainViewModel(
                         setupGroupTab(forceRefresh = true)
                         refreshSelectedGuid()
                     }
+                    if (result.directRetrySubIds.isNotEmpty()) {
+                        _uiState.update { it.copy(directRetrySubIds = result.directRetrySubIds) }
+                    }
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (e: Exception) {
-                    LogUtil.e(AppConfig.TAG, "Subscription update failed", e)
+                    LogUtil.e(AppConfig.TAG, "Subscription update failed, trigger=$trigger", e)
                     toastError(R.string.toast_failure)
                 }
             }

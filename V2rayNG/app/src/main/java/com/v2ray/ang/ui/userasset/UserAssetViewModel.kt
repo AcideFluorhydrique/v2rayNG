@@ -7,6 +7,7 @@ import com.v2ray.ang.dto.UrlContentRequest
 import com.v2ray.ang.dto.entities.AssetUrlCache
 import com.v2ray.ang.dto.entities.AssetUrlItem
 import com.v2ray.ang.extension.concatUrl
+import com.v2ray.ang.handler.FetchRoutePolicy
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.ui.base.BaseViewModel
 import com.v2ray.ang.util.HttpUtil
@@ -32,6 +33,11 @@ class UserAssetViewModel(application: Application) : BaseViewModel(application) 
 
     private val _uiState = MutableStateFlow(UserAssetUiState())
     internal val uiState: StateFlow<UserAssetUiState> = _uiState.asStateFlow()
+
+    // Assets that failed through the proxy, offered for a direct retry. Kept outside
+    // uiState, which reload() replaces.
+    private val _directRetryGuids = MutableStateFlow<List<String>>(emptyList())
+    internal val directRetryGuids: StateFlow<List<String>> = _directRetryGuids.asStateFlow()
     private var reloadJob: Job? = null
 
     fun reload(geoFilesSource: String, extDir: File): Job {
@@ -81,27 +87,54 @@ class UserAssetViewModel(application: Application) : BaseViewModel(application) 
         }
     }
 
+    /**
+     * @param trigger Who started the download, which decides whether it may go direct.
+     * @param onlyGuids Download only these assets, e.g. the ones offered for a direct retry.
+     */
     fun downloadGeoFiles(
         extDir: File,
-        httpPort: Int,
         proxyUsername: String? = null,
-        proxyPassword: String? = null
+        proxyPassword: String? = null,
+        trigger: FetchRoutePolicy.Trigger = FetchRoutePolicy.Trigger.USER,
+        onlyGuids: Collection<String>? = null
     ): GeoDownloadResult {
-        val snapshot = uiState.value.assets
+        val snapshot = uiState.value.assets.filter { onlyGuids == null || it.guid in onlyGuids }
         var successCount = 0
         val failures = mutableListOf<String>()
+        val directRetry = mutableListOf<String>()
 
         snapshot.forEach { cache ->
             val item = cache.assetUrl
-            val portsToTry = if (httpPort == 0) listOf(0) else listOf(httpPort, 0)
-            if (portsToTry.any { tryDownload(item, extDir, it, proxyUsername, proxyPassword) }) {
+            // Upstream's order: through the proxy, then directly.
+            val outcome = FetchRoutePolicy.fetch(
+                trigger,
+                listOf(FetchRoutePolicy.Route.PROXY, FetchRoutePolicy.Route.DIRECT)
+            ) { httpPort ->
+                if (tryDownload(item, extDir, httpPort, proxyUsername, proxyPassword)) Unit else null
+            }
+            if (outcome is FetchRoutePolicy.Outcome.Fetched) {
                 successCount++
             } else {
                 failures.add(item.remarks)
+                if (outcome is FetchRoutePolicy.Outcome.Failed && outcome.canRetryDirect) {
+                    directRetry.add(cache.guid)
+                }
             }
         }
 
+        _directRetryGuids.value = directRetry
         return GeoDownloadResult(successCount, failures.size, failures)
+    }
+
+    /** Returns the assets offered for a direct retry and withdraws the offer. */
+    internal fun takeDirectRetry(): List<String> {
+        val guids = _directRetryGuids.value
+        _directRetryGuids.value = emptyList()
+        return guids
+    }
+
+    internal fun dismissDirectRetry() {
+        _directRetryGuids.value = emptyList()
     }
 
     private fun tryDownload(

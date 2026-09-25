@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Forkray-only strings, kept out of strings.xml so upstream changes to it merge cleanly. -->
+<resources>
+    <string name="fetch_direct_notice">সংযুক্ত নয়: প্রক্সি ছাড়াই সরাসরি আনা হয়েছে</string>
+    <string name="fetch_direct_retry_title">প্রক্সির মাধ্যমে আনা ব্যর্থ হয়েছে</string>
+    <string name="fetch_direct_retry_message">প্রক্সি ছাড়া আবার চেষ্টা করবেন? অনুরোধটি সরাসরি পাঠানো হবে: সার্ভার আপনার আসল IP ঠিকানা দেখতে পাবে, এবং আপনার নেটওয়ার্ক দেখতে পাবে আপনি কোন সার্ভারের সাথে যোগাযোগ করেছেন।</string>
+    <string name="fetch_direct_retry_confirm">সরাসরি আবার চেষ্টা করুন</string>
+</resources>

@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.SubscriptionUpdateMessage
+import com.v2ray.ang.dto.SubscriptionUpdateResult
 import com.v2ray.ang.dto.entities.SubscriptionCache
 import com.v2ray.ang.dto.entities.SubscriptionItem
 import com.v2ray.ang.extension.moveItem
 import com.v2ray.ang.handler.AngConfigManager
+import com.v2ray.ang.handler.FetchRoutePolicy
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsChangeManager
 import com.v2ray.ang.handler.SettingsManager
@@ -30,6 +32,10 @@ class SubscriptionsViewModel(application: Application) : BaseViewModel(applicati
     private var qrCodeJob: Job? = null
     private val _qrCode = MutableStateFlow<Bitmap?>(null)
     internal val qrCode = _qrCode.asStateFlow()
+
+    // Subscriptions that failed through the proxy, offered for a direct retry
+    private val _directRetrySubIds = MutableStateFlow<List<String>>(emptyList())
+    internal val directRetrySubIds = _directRetrySubIds.asStateFlow()
     private val subscriptions: MutableList<SubscriptionCache> =
         MmkvManager.decodeSubscriptions().toMutableList()
 
@@ -99,11 +105,35 @@ class SubscriptionsViewModel(application: Application) : BaseViewModel(applicati
     }
 
     fun updateSubscriptionsOnly() {
+        updateSubscriptionsOnly(FetchRoutePolicy.Trigger.USER) {
+            AngConfigManager.updateConfigViaSubAll(FetchRoutePolicy.Trigger.USER)
+        }
+    }
+
+    /** The user chose to fetch the subscriptions that failed through the proxy directly. */
+    internal fun retrySubscriptionsDirect() {
+        val subIds = _directRetrySubIds.value
+        _directRetrySubIds.value = emptyList()
+        if (subIds.isEmpty()) return
+        updateSubscriptionsOnly(FetchRoutePolicy.Trigger.USER_CONFIRMED_DIRECT) {
+            subIds.fold(SubscriptionUpdateResult()) { acc, id ->
+                val item = MmkvManager.decodeSubscription(id) ?: return@fold acc
+                acc + AngConfigManager.updateConfigViaSub(SubscriptionCache(id, item), FetchRoutePolicy.Trigger.USER_CONFIRMED_DIRECT)
+            }
+        }
+    }
+
+    internal fun dismissDirectRetry() {
+        _directRetrySubIds.value = emptyList()
+    }
+
+    private fun updateSubscriptionsOnly(
+        trigger: FetchRoutePolicy.Trigger,
+        update: () -> SubscriptionUpdateResult
+    ) {
         launchLoading {
             try {
-                val result = withContext(Dispatchers.IO) {
-                    AngConfigManager.updateConfigViaSubAll()
-                }
+                val result = withContext(Dispatchers.IO) { update() }
 
                 when {
                     result.successCount + result.failureCount + result.skipCount == 0 ->
@@ -122,10 +152,13 @@ class SubscriptionsViewModel(application: Application) : BaseViewModel(applicati
                         toast(getString(R.string.title_update_subscription_result, result.configCount, result.successCount, result.failureCount, result.skipCount))
                 }
                 reload()
+                if (result.directRetrySubIds.isNotEmpty()) {
+                    _directRetrySubIds.value = result.directRetrySubIds
+                }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (e: Exception) {
-                LogUtil.e(AppConfig.TAG, "Subscription update failed", e)
+                LogUtil.e(AppConfig.TAG, "Subscription update failed, trigger=$trigger", e)
                 toastError(R.string.toast_failure)
             }
         }
@@ -138,7 +171,10 @@ class SubscriptionsViewModel(application: Application) : BaseViewModel(applicati
             .map { it.guid }
 
         if (subIds.isNotEmpty()) {
-            MessageHelper.sendMsg2SubscriptionService(app, SubscriptionUpdateMessage(AppConfig.MSG_SUB_UPDATE_START, false, subIds))
+            MessageHelper.sendMsg2SubscriptionService(
+                app,
+                SubscriptionUpdateMessage(AppConfig.MSG_SUB_UPDATE_START, false, subIds, interactive = true)
+            )
         }
 
         toast(R.string.subscription_updater_job_tips)

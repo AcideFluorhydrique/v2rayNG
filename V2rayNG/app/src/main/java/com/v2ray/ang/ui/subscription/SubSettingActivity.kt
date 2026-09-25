@@ -45,6 +45,7 @@ import com.v2ray.ang.handler.MmkvManager.rememberMmkvBool
 import com.v2ray.ang.ui.base.BaseComponentActivity
 import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.DeleteConfirmDialog
+import com.v2ray.ang.ui.compose.DirectRetryDialog
 import com.v2ray.ang.ui.compose.ItemDivider
 import com.v2ray.ang.ui.compose.NavigationBarsBottomPadding
 import com.v2ray.ang.ui.compose.QRCodeDialog
@@ -120,6 +121,7 @@ fun SubSettingScreen(
 
     var shareTarget by remember { mutableStateOf<Pair<String, String>?>(null) }
     val qrCodeBitmap by viewModel.qrCode.collectAsStateWithLifecycle()
+    val directRetrySubIds by viewModel.directRetrySubIds.collectAsStateWithLifecycle()
 
     val lazyListState = rememberLazyListState()
     val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -263,6 +265,13 @@ fun SubSettingScreen(
     }
 
     // QR Code Dialog
+    if (directRetrySubIds.isNotEmpty()) {
+        DirectRetryDialog(
+            onRetryDirect = viewModel::retrySubscriptionsDirect,
+            onDismiss = viewModel::dismissDirectRetry
+        )
+    }
+
     if (qrCodeBitmap != null) {
         QRCodeDialog(
             bitmap = qrCodeBitmap,

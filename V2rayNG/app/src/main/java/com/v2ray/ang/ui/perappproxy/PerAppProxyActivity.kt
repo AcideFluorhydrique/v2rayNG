@@ -48,6 +48,7 @@ import com.v2ray.ang.ui.compose.AppDropdownMenuItems
 import com.v2ray.ang.ui.compose.AppListItem
 import com.v2ray.ang.ui.compose.AppTopBar
 import com.v2ray.ang.ui.compose.ConfirmDialog
+import com.v2ray.ang.ui.compose.DirectRetryDialog
 import com.v2ray.ang.ui.compose.ItemDivider
 import com.v2ray.ang.ui.compose.NavigationBarsBottomPadding
 import com.v2ray.ang.ui.compose.verticalScrollbar
@@ -77,6 +78,14 @@ class PerAppProxyActivity : BaseComponentActivity() {
         val blacklist by viewModel.blacklist.collectAsStateWithLifecycle()
         val perAppProxyEnabled by viewModel.perAppProxyEnabled.collectAsStateWithLifecycle()
         val bypassApps by viewModel.bypassApps.collectAsStateWithLifecycle()
+        val directRetryOffered by viewModel.directRetryOffered.collectAsStateWithLifecycle()
+
+        if (directRetryOffered) {
+            DirectRetryDialog(
+                onRetryDirect = { viewModel.retrySelectProxyAppAutoDirect(this) },
+                onDismiss = viewModel::dismissDirectRetry
+            )
+        }
 
         PerAppProxyScreen(
             apps = apps,

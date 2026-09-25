@@ -6,6 +6,7 @@ import com.v2ray.ang.dto.entities.ProfileItem
 import com.v2ray.ang.dto.entities.ServerAffiliationInfo
 import com.v2ray.ang.dto.entities.SubscriptionCache
 import com.v2ray.ang.dto.entities.SubscriptionItem
+import com.v2ray.ang.handler.FetchRoutePolicy
 import kotlinx.coroutines.flow.Flow
 import java.io.Closeable
 
@@ -49,8 +50,8 @@ interface MainDataSource : Closeable {
         updateUI: Boolean
     ): Pair<Int, Int>
 
-    fun updateConfigViaSubAll(): SubscriptionUpdateResult
-    fun updateConfigViaSub(subscriptionCache: SubscriptionCache): SubscriptionUpdateResult
+    fun updateConfigViaSubAll(trigger: FetchRoutePolicy.Trigger): SubscriptionUpdateResult
+    fun updateConfigViaSub(subscriptionCache: SubscriptionCache, trigger: FetchRoutePolicy.Trigger): SubscriptionUpdateResult
 
     fun shareNonCustomConfigsToClipboard(guids: List<String>): Int
     fun share2QRCode(guid: String): android.graphics.Bitmap?
