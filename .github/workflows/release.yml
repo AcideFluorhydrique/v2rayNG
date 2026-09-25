@@ -6,12 +6,18 @@ name: Release
 #   2. creates a GitHub release with the APKs and the build manifest
 #   3. regenerates this fork's own F-Droid repository and publishes it to
 #      GitHub Pages at https://acidefluorhydrique.github.io/v2rayNG/repo
+# A version whose APKs are already published is never built again.
+#
+# Run manually, it does step 3 only: it rebuilds the F-Droid repository from
+# the releases already published, with the configuration on the branch it is
+# run from. That is how to recover when only publishing the repository failed.
 # See docs/maintenance.md for the secrets and one-time settings it needs.
 
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -29,6 +35,7 @@ env:
 
 jobs:
   check-tag:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -47,6 +54,31 @@ jobs:
           # Only what was reviewed and merged gets released.
           if ! git merge-base --is-ancestor "${GITHUB_SHA}" origin/master; then
             echo "::error::${GITHUB_REF_NAME} points at ${GITHUB_SHA}, which is not on master."
+            exit 1
+          fi
+
+      # Once a version's APKs are out, they have been downloaded, installed and
+      # checked against the build manifest that names their commit. Building
+      # that version again from a moved tag would give one version number two
+      # different sources and binaries, which is exactly what makes a release
+      # impossible to verify. A release with no APKs yet (created on the
+      # Releases page, or a run that failed before uploading) is still fine.
+      - name: Refuse to rebuild a published version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          code=$(curl -sS -o release.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/releases/tags/${GITHUB_REF_NAME}")
+          case "$code" in
+            404) apks=0 ;;
+            200) apks=$(jq '[.assets[].name | select(endswith(".apk"))] | length' release.json) ;;
+            *) echo "::error::Could not look up the release for ${GITHUB_REF_NAME} (HTTP ${code})."; exit 1 ;;
+          esac
+          if [ "$apks" -gt 0 ]; then
+            echo "::error::${GITHUB_REF_NAME} already has ${apks} published APKs, so it is not built again. Release the change as a new version (docs/maintenance.md). If only publishing the F-Droid repository failed, run this workflow manually instead."
             exit 1
           fi
 
@@ -126,6 +158,8 @@ jobs:
 
   fdroid-repo:
     needs: github-release
+    # Also on a manual run, when the jobs before it are skipped.
+    if: ${{ !cancelled() && (github.event_name == 'workflow_dispatch' || needs.github-release.result == 'success') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
