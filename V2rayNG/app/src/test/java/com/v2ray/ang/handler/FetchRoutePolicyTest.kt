@@ -7,10 +7,11 @@ import com.v2ray.ang.handler.FetchRoutePolicy.Route.DIRECT
 import com.v2ray.ang.handler.FetchRoutePolicy.Route.PROXY
 import com.v2ray.ang.handler.FetchRoutePolicy.Trigger
 import kotlinx.coroutines.CancellationException
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 class FetchRoutePolicyTest {
 
@@ -168,9 +169,11 @@ class FetchRoutePolicyTest {
         assertEquals(listOf(0, PORT), recorder.ports)
     }
 
-    @Test(expected = CancellationException::class)
+    @Test
     fun cancellationIsNotSwallowed() {
-        fetch(true, true, Trigger.USER, proxyThenDirect, Recorder(mapOf(PORT to CancellationException("cancelled"))))
+        assertThrows(CancellationException::class.java) {
+            fetch(true, true, Trigger.USER, proxyThenDirect, Recorder(mapOf(PORT to CancellationException("cancelled"))))
+        }
     }
 
     // ---------- wiring ----------
