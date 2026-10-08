@@ -100,6 +100,20 @@ All of this is under the repository's **Settings**.
 1. A PR *Merge upstream release x.y.z* appears. Its description says whether
    it **updates the Xray core**. Those are security-relevant: users run the old
    core until you release, so do not let them wait.
+
+   The core submodule is fetched from this fork's own mirror,
+   `AcideFluorhydrique/AndroidLibXrayLite`, so that a pinned commit survives
+   upstream rewriting or removing its repository. A PR that updates the core
+   therefore fails at checkout until the mirror has the new commit: press
+   *Sync fork* on the mirror's `main`, which must never carry commits of its
+   own, then re-run the checks. *Sync fork* does not copy tags, and the build
+   manifest names the core's version from its tag, so push those too from a
+   clone that has both remotes:
+
+   ```bash
+   git fetch https://github.com/2dust/AndroidLibXrayLite.git --tags
+   git push https://github.com/AcideFluorhydrique/AndroidLibXrayLite.git --tags
+   ```
 2. Wait for its checks. If they fail, the failing step says which pin or
    change is at fault; fix it on the PR branch.
 3. Merge with *Create a merge commit*.
