@@ -31,7 +31,7 @@ core_rev=$(git rev-parse HEAD:AndroidLibXrayLite)
 # Downloads are read into variables before parsing: a parser that stops at the
 # first match would otherwise close the pipe on curl, and pipefail would turn
 # the resulting SIGPIPE into a failure.
-core_gomod=$(curl -fsSL "https://raw.githubusercontent.com/2dust/AndroidLibXrayLite/${core_rev}/go.mod")
+core_gomod=$(curl -fsSL "https://raw.githubusercontent.com/AcideFluorhydrique/AndroidLibXrayLite/${core_rev}/go.mod")
 go_required=$(awk '/^go /{print $2; exit}' <<<"$core_gomod")
 go_minor="${go_pin%.*}"
 go_latest_patch=$(curl -fsSL 'https://go.dev/dl/?mode=json&include=all' \

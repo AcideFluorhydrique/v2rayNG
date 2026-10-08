@@ -23,7 +23,7 @@ an `fdroiddata` recipe.
 
 | Artifact | Source | Pinned by | Built by |
 | --- | --- | --- | --- |
-| `libv2ray.aar` (Xray core + JNI bindings) | [`2dust/AndroidLibXrayLite`](https://github.com/2dust/AndroidLibXrayLite) | git submodule | `gomobile bind` in CI |
+| `libv2ray.aar` (Xray core + JNI bindings) | [`AcideFluorhydrique/AndroidLibXrayLite`](https://github.com/AcideFluorhydrique/AndroidLibXrayLite), whose `main` mirrors [`2dust/AndroidLibXrayLite`](https://github.com/2dust/AndroidLibXrayLite) unchanged | git submodule | `gomobile bind` in CI |
 | `libhev-socks5-tunnel.so` (in-process tun2socks for `VpnService`) | [`heiher/hev-socks5-tunnel`](https://github.com/heiher/hev-socks5-tunnel) | git submodule | `compile-hevtun.sh` (`ndk-build`) |
 | `libhevsockstun.so` (standalone binary for root mode) | same submodule | git submodule | `compile-hevtun.sh` (`ndk-build`) |
 | `geoip.dat`, `geosite.dat`, `geoip-only-cn-private.dat` (routing databases, inside the aar) | [`AcideFluorhydrique/forkray-geodata`](https://github.com/AcideFluorhydrique/forkray-geodata) | git submodule | its `scripts/build.sh` |
