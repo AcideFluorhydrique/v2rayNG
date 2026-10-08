@@ -5,7 +5,8 @@ name: Release
 #   1. builds it from source with fdroid-source-build.yml, signed
 #   2. creates a GitHub release with the APKs and the build manifest
 #   3. regenerates this fork's own F-Droid repository and publishes it to
-#      GitHub Pages at https://acidefluorhydrique.github.io/v2rayNG/repo
+#      GitHub Pages at https://acidefluorhydrique.github.io/v2rayNG/repo,
+#      then to its mirrors on Codeberg and GitLab
 # A version whose APKs are already published is never built again.
 #
 # Run manually, it does step 3 only: it rebuilds the F-Droid repository from
@@ -226,3 +227,26 @@ jobs:
           publish_dir: ./fdroid-repo/repo
           destination_dir: repo
           force_orphan: true
+
+      # The mirrors listed in fdroid-repo/config.yml. A mirror that cannot be
+      # reached must not undo a release that is already out, so a failure is
+      # reported and the run carries on: clients skip a mirror whose index is
+      # older than the one they have. Run this workflow manually to retry.
+      - name: Publish to the Codeberg mirror
+        env:
+          MIRROR_TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          bash .github/scripts/publish-mirror.sh \
+            https://codeberg.org/lanticy/forkray-fdroid.git lanticy \
+            lanticy lanticy@noreply.codeberg.org \
+            || echo '::warning::The Codeberg mirror was not updated; see the log above.'
+
+      - name: Publish to the GitLab mirror
+        env:
+          MIRROR_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+        run: |
+          bash .github/scripts/publish-mirror.sh \
+            https://gitlab.com/HydrofluoricAcid/forkray-fdroid.git oauth2 \
+            HydrofluoricAcid 32053395-HydrofluoricAcid@users.noreply.gitlab.com \
+            fdroid-repo/mirror/gitlab-ci.yml \
+            || echo '::warning::The GitLab mirror was not updated; see the log above.'

@@ -1,0 +1,13 @@
+# Pushed to the GitLab mirror as .gitlab-ci.yml by
+# .github/scripts/publish-mirror.sh. GitLab only serves Pages from a job's
+# "public" artifact, so this job moves the repository there unchanged.
+pages:
+  stage: deploy
+  script:
+    - mkdir public
+    - mv fdroid public/fdroid
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == "pages"

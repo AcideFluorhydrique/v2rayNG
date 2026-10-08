@@ -91,7 +91,26 @@ All of this is under the repository's **Settings**.
    branch: Pages → *Deploy from a branch* → `gh-pages`, `/ (root)`. The
    repository is then at <https://acidefluorhydrique.github.io/v2rayNG/repo>.
 
-7. **Keep scheduled workflows alive.** GitHub disables scheduled workflows in
+7. **Mirrors of the F-Droid repository.** Everything above lives on GitHub,
+   so the repository is also published to two other hosts. Clients find them
+   through the signed index and need no new address. Each is an empty public
+   repository that `release.yml` force-pushes one commit to, on a branch
+   named `pages`:
+
+   | Host | Repository | Secret | Served at |
+   | --- | --- | --- | --- |
+   | Codeberg | `lanticy/forkray-fdroid` | `CODEBERG_TOKEN`: an access token with *repository: read and write* | <https://lanticy.codeberg.page/forkray-fdroid/fdroid/repo> |
+   | GitLab | `HydrofluoricAcid/forkray-fdroid` | `GITLAB_TOKEN`: a project access token, role *Maintainer*, scope `write_repository` | <https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid/repo> |
+
+   On GitLab, Deploy → Pages → untick *Use unique domain*, or the site gets a
+   random address instead of the one above; and the account must be able to
+   run pipelines, since GitLab serves Pages only from the CI job in
+   `fdroid-repo/mirror/gitlab-ci.yml`. To add a mirror, add it to `mirrors:`
+   in `fdroid-repo/config.yml` and give it a step in `release.yml`; its
+   address must end in `fdroid`. A mirror that fails does not fail the
+   release: the run shows a warning, and a manual run of *Release* retries.
+
+8. **Keep scheduled workflows alive.** GitHub disables scheduled workflows in
    a public repository after 60 days without activity. Regular syncs count as
    activity; if they stop, re-enable them under Actions.
 
