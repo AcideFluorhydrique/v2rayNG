@@ -177,6 +177,15 @@ android {
         }
     }
 
+    // The Android Gradle Plugin otherwise adds the dependency list to the
+    // signing block of every signed APK, encrypted with a Google public key,
+    // so only Google can read it. F-Droid and IzzyOnDroid flag that block as
+    // an opaque blob nobody else can audit.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     testOptions {
         unitTests.all {
             it.useJUnitPlatform()
