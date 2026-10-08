@@ -238,6 +238,7 @@ jobs:
         run: |
           bash .github/scripts/publish-mirror.sh \
             https://codeberg.org/lanticy/forkray-fdroid.git lanticy \
+            lanticy lanticy@noreply.codeberg.org \
             || echo '::warning::The Codeberg mirror was not updated; see the log above.'
 
       - name: Publish to the GitLab mirror
@@ -246,5 +247,6 @@ jobs:
         run: |
           bash .github/scripts/publish-mirror.sh \
             https://gitlab.com/HydrofluoricAcid/forkray-fdroid.git oauth2 \
+            HydrofluoricAcid 32053395-HydrofluoricAcid@users.noreply.gitlab.com \
             fdroid-repo/mirror/gitlab-ci.yml \
             || echo '::warning::The GitLab mirror was not updated; see the log above.'

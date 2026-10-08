@@ -1,13 +1,16 @@
 #!/bin/bash
 # Publishes the generated F-Droid repository to a mirror on another git host.
 #
-#   publish-mirror.sh <git url> <user name> [file to add as .gitlab-ci.yml]
+#   publish-mirror.sh <git url> <user name> <author name> <author email> \
+#       [file to add as .gitlab-ci.yml]
 #
 # The mirror serves a branch as a static site, so the repository directory
 # (SOURCE_DIR) is pushed there as fdroid/repo: fdroidserver only accepts a
 # mirror whose address ends in "fdroid", and appends "/repo" to it itself.
 # Every push is a single commit that replaces the branch, like gh-pages, so
-# the mirror holds no history and stays the size of the APKs it offers.
+# the mirror holds no history and stays the size of the APKs it offers. The
+# commit is authored as the mirror's own account there, so each host shows it
+# as that account's work rather than as an unknown GitHub bot.
 #
 # The token is read from MIRROR_TOKEN and handed to git through a credential
 # helper, so it never appears in a URL, a command line or the log.
@@ -18,7 +21,9 @@ set -o nounset
 
 url="${1:?git url}"
 export MIRROR_USER="${2:?user name}"
-ci_file="${3:-}"
+author_name="${3:?author name}"
+author_email="${4:?author email}"
+ci_file="${5:-}"
 SOURCE_DIR="${SOURCE_DIR:-fdroid-repo/repo}"
 BRANCH="${BRANCH:-pages}"
 
@@ -42,8 +47,8 @@ fi
 git -C "$work" init --quiet --initial-branch "$BRANCH"
 git -C "$work" add --all
 git -C "$work" \
-    -c user.name='github-actions[bot]' \
-    -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+    -c user.name="$author_name" \
+    -c user.email="$author_email" \
     commit --quiet --message "deploy: ${GITHUB_SHA:-manual}"
 
 # The first, empty helper drops any helper the runner has configured.
