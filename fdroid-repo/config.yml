@@ -14,6 +14,16 @@ repo_description: >-
 # Only the APKs release.yml puts in repo/ are offered; there is no archive.
 archive_older: 0
 
+# Copies of the repository on other hosts, published by release.yml right
+# after GitHub Pages. They are listed in the signed index, so clients that
+# already have the repository learn of them and switch over by themselves
+# when GitHub is unreachable or the repository there is gone. fdroidserver
+# appends "/repo" to each address. A mirror needs no trust: clients accept an
+# index only if it is signed by this repository's key.
+mirrors:
+  - https://lanticy.codeberg.page/forkray-fdroid/fdroid
+  - https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid
+
 sdk_path: $ANDROID_HOME
 
 keystore: keystore.jks
