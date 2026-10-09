@@ -23,6 +23,9 @@ archive_older: 0
 mirrors:
   - https://lanticy.codeberg.page/forkray-fdroid/fdroid
   - https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid
+  # The same branch read straight from the GitLab repository, for when GitLab
+  # Pages is down but gitlab.com is not. Nothing extra is published for it.
+  - https://gitlab.com/HydrofluoricAcid/forkray-fdroid/-/raw/pages/fdroid
 
 sdk_path: $ANDROID_HOME
 

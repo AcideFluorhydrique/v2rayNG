@@ -103,9 +103,14 @@ All of this is under the repository's **Settings**.
    | GitLab | `HydrofluoricAcid/forkray-fdroid` | `GITLAB_TOKEN`: a project access token, role *Maintainer*, scope `write_repository` | <https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid/repo> |
 
    On GitLab, Deploy → Pages → untick *Use unique domain*, or the site gets a
-   random address instead of the one above; and the account must be able to
-   run pipelines, since GitLab serves Pages only from the CI job in
-   `fdroid-repo/mirror/gitlab-ci.yml`. To add a mirror, add it to `mirrors:`
+   random address instead of the one above; set Settings → General →
+   Visibility → *Pages* to *Everyone*, or it answers only to signed-in
+   project members; and the account must be able to run pipelines, since
+   GitLab serves Pages only from the CI job in
+   `fdroid-repo/mirror/gitlab-ci.yml`. The GitLab branch is listed a second
+   time by its raw address,
+   <https://gitlab.com/HydrofluoricAcid/forkray-fdroid/-/raw/pages/fdroid/repo>,
+   which keeps working when only GitLab Pages is down. To add a mirror, add it to `mirrors:`
    in `fdroid-repo/config.yml` and give it a step in `release.yml`; its
    address must end in `fdroid`. A mirror that fails does not fail the
    release: the run shows a warning, and a manual run of *Release* retries.
