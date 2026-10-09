@@ -111,9 +111,14 @@ android {
         val variant = this
         val isFdroid = variant.productFlavors.any { it.name == "fdroid" }
         if (isFdroid) {
+            // F-Droid clients offer the highest version code a device can
+            // run, and a 64-bit device also runs the 32-bit build, so each
+            // 64-bit build must rank above its 32-bit counterpart. Upstream's
+            // order was the reverse, which made clients suggest armeabi-v7a
+            // on arm64 phones and keep offering it as an update.
             val versionCodes =
                 mapOf(
-                    "armeabi-v7a" to 2, "arm64-v8a" to 1, "x86" to 4, "x86_64" to 3, "universal" to 0
+                    "armeabi-v7a" to 1, "arm64-v8a" to 2, "x86" to 3, "x86_64" to 4, "universal" to 0
                 )
 
             variant.outputs
