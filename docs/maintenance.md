@@ -115,6 +115,12 @@ All of this is under the repository's **Settings**.
    address must end in `fdroid`. A mirror that fails does not fail the
    release: the run shows a warning, and a manual run of *Release* retries.
 
+   The page shown at each of these addresses is written by
+   `fdroid-repo/make-landing-page.py` right after `fdroid update`, from the
+   signed index: it lists the main address, every mirror, the signing key
+   fingerprint and the files on offer, so a new mirror appears on it without
+   further work. Give a host a readable name in its `host_label` if needed.
+
 8. **Keep scheduled workflows alive.** GitHub disables scheduled workflows in
    a public repository after 60 days without activity. Regular syncs count as
    activity; if they stop, re-enable them under Actions.

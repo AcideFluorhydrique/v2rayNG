@@ -195,9 +195,13 @@ jobs:
       - name: Add the listing metadata
         run: |
           set -euo pipefail
-          mkdir -p "fdroid-repo/metadata/${APP_ID}" fdroid-repo/repo/icons
+          mkdir -p "fdroid-repo/metadata/${APP_ID}"
           cp -r fastlane/metadata/android/. "fdroid-repo/metadata/${APP_ID}/"
-          cp fastlane/metadata/android/en-US/images/icon.png fdroid-repo/repo/icons/icon.png
+          # The repository's own icon. fdroidserver reads it from icon.png next
+          # to config.yml and copies it into repo/icons itself; when that file
+          # is missing it writes a QR code there instead, over anything put in
+          # repo/icons beforehand.
+          cp fastlane/metadata/android/en-US/images/icon.png fdroid-repo/icon.png
 
       - name: Decode the repository signing key
         uses: timheuer/base64-to-file@v2.0.0
@@ -218,6 +222,9 @@ jobs:
           chmod 600 config.yml keystore.jks
           fdroid update --verbose
           rm -f keystore.jks
+          # The page people see when they open the repository's address:
+          # fdroidserver's own names only the main address, not the mirrors.
+          python3 make-landing-page.py repo
           ls -l repo
 
       - name: Publish to GitHub Pages
