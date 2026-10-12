@@ -16,6 +16,12 @@
 set -o errexit
 set -o pipefail
 set -o nounset
+set -o errtrace
+
+# Name the command that failed as an annotation on the run. Annotations can be
+# read without signing in, unlike the log, and "exit code 1" alone says nothing
+# about which of the git or gh calls below was refused.
+trap 'echo "::error::upstream-sync.sh failed at line ${LINENO}: ${BASH_COMMAND}"' ERR
 
 UPSTREAM_URL="${UPSTREAM_URL:-https://github.com/2dust/v2rayNG.git}"
 UPSTREAM_WEB="${UPSTREAM_WEB:-https://github.com/2dust/v2rayNG}"
