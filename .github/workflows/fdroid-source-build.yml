@@ -307,6 +307,21 @@ jobs:
           KEY_ALIAS: ${{ secrets.APP_KEYSTORE_ALIAS }}
           KEY_PASSWORD: ${{ secrets.APP_KEY_PASSWORD }}
 
+      # Read back from the built APKs, before a release uploads anything: a
+      # version code cannot be corrected once its APK is out. A release fails
+      # on any problem; other builds only warn about codes that are not above
+      # the published ones, since rebuilding an older commit is legitimate.
+      - name: Check the version codes
+        env:
+          PUBLISHED_CHECK: ${{ env.SIGN == 'true' && 'fail' || 'warn' }}
+        run: |
+          set -euo pipefail
+          AAPT2="$(ls -d "${ANDROID_HOME}"/build-tools/* | sort -V | tail -n 1)/aapt2"
+          export AAPT2
+          repo_url=$(sed -nE 's/^repo_url: *//p' fdroid-repo/config.yml)
+          bash .github/scripts/check-version-codes.sh \
+            V2rayNG/app/build/outputs/apk/fdroid/release "${repo_url}/index-v2.json"
+
       # The checks AGENTS.md requires for Gradle and shared Kotlin changes. The
       # unit tests run for both flavors, because shared code now branches on
       # per-flavor BuildConfig fields (UPDATE_CHECK_ENABLED, and the F-Droid
