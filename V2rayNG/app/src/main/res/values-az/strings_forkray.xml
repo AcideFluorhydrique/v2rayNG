@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Forkray-only strings, kept out of strings.xml so upstream changes to it merge cleanly. -->
+<resources>
+    <string name="fetch_direct_notice">Qoşulmayıb: proksisiz, birbaşa yükləndi</string>
+    <string name="fetch_direct_retry_title">Proksi vasitəsilə alınmadı</string>
+    <string name="fetch_direct_retry_message">Proksisiz yenidən cəhd edilsin? Sorğu birbaşa göndəriləcək: server sizin real IP ünvanınızı görəcək, şəbəkəniz isə hansı serverə müraciət etdiyinizi görə biləcək.</string>
+    <string name="fetch_direct_retry_confirm">Birbaşa yenidən cəhd et</string>
+</resources>
