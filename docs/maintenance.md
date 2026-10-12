@@ -105,9 +105,14 @@ All of this is under the repository's **Settings**.
    On GitLab, Deploy → Pages → untick *Use unique domain*, or the site gets a
    random address instead of the one above; set Settings → General →
    Visibility → *Pages* to *Everyone*, or it answers only to signed-in
-   project members; and the account must be able to run pipelines, since
+   project members; the account must be able to run pipelines, since
    GitLab serves Pages only from the CI job in
-   `fdroid-repo/mirror/gitlab-ci.yml`. The GitLab branch is listed a second
+   `fdroid-repo/mirror/gitlab-ci.yml`; and under Settings → Repository →
+   Protected branches, turn on *Allowed to force push* for `pages`. GitLab
+   protects the default branch against force pushes, and every release
+   replaces the branch with a single new commit, so without it the first
+   release publishes and every later one is refused with only a warning on
+   the run. The GitLab branch is listed a second
    time by its raw address,
    <https://gitlab.com/HydrofluoricAcid/forkray-fdroid/-/raw/pages/fdroid/repo>,
    which keeps working when only GitLab Pages is down. To add a mirror, add it to `mirrors:`
