@@ -20,12 +20,23 @@ archive_older: 0
 # when GitHub is unreachable or the repository there is gone. fdroidserver
 # appends "/repo" to each address. A mirror needs no trust: clients accept an
 # index only if it is signed by this repository's key.
+#
+# countryCode is where the host's servers are, and clients show it as a flag.
+# Leave it out for a host behind an anycast CDN, which answers from wherever
+# the client is: GitHub Pages (Fastly) and gitlab.com (Cloudflare).
 mirrors:
-  - https://lanticy.codeberg.page/forkray-fdroid/fdroid
-  - https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid
+  - url: https://lanticy.codeberg.page/forkray-fdroid/fdroid
+    countryCode: DE
+  - url: https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid
+    countryCode: US
   # The same branch read straight from the GitLab repository, for when GitLab
   # Pages is down but gitlab.com is not. Nothing extra is published for it.
-  - https://gitlab.com/HydrofluoricAcid/forkray-fdroid/-/raw/pages/fdroid
+  - url: https://gitlab.com/HydrofluoricAcid/forkray-fdroid/-/raw/pages/fdroid
+  # 0xacab, Riseup's GitLab, serves its Pages under itcouldbewor.se.
+  - url: https://lanticy.itcouldbewor.se/forkray-fdroid/fdroid
+    countryCode: US
+  - url: https://0xacab.org/lanticy/forkray-fdroid/-/raw/pages/fdroid
+    countryCode: US
 
 sdk_path: $ANDROID_HOME
 
