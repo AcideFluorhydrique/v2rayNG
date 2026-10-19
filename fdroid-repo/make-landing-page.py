@@ -43,6 +43,10 @@ def host_label(url):
         return 'GitLab Pages'
     if host == 'gitlab.com' and '/-/raw/' in parts.path:
         return 'GitLab (raw files)'
+    if host.endswith('itcouldbewor.se'):
+        return '0xacab Pages'
+    if host == '0xacab.org' and '/-/raw/' in parts.path:
+        return '0xacab (raw files)'
     if host == 'raw.githubusercontent.com':
         return 'GitHub (raw files)'
     return host
