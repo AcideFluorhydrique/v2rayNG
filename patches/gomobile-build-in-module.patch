@@ -11,7 +11,7 @@ SagerNet/gomobile@8fe7d39dc4 ("Remove project path from gobind binary").
 diff --git a/cmd/gomobile/bind_androidapp.go b/cmd/gomobile/bind_androidapp.go
 --- a/cmd/gomobile/bind_androidapp.go
 +++ b/cmd/gomobile/bind_androidapp.go
-@@ -363,32 +363,36 @@ func buildAndroidSO(outputDir string, arch string) error {
+@@ -363,32 +363,45 @@ func buildAndroidSO(outputDir string, arch string) error {
  	}
  
  	srcDir := filepath.Join(tmpdir, "src")
@@ -35,10 +35,19 @@ diff --git a/cmd/gomobile/bind_androidapp.go b/cmd/gomobile/bind_androidapp.go
 +		}
  		if !buildN {
 -			if err := doCopyAll(newSrcDir, srcDir); err != nil {
++			// doCopyAll creates only the last directory level, and fails if
++			// it exists, so start from a clean parent.
++			archDir := filepath.Dir(newSrcDir)
++			if err := os.RemoveAll(archDir); err != nil {
++				return err
++			}
++			if err := os.MkdirAll(archDir, 0755); err != nil {
++				return err
++			}
 +			if err := doCopyAll(newSrcDir, filepath.Join(srcDir, "gobind")); err != nil {
  				return err
  			}
-+			defer os.RemoveAll(filepath.Dir(newSrcDir))
++			defer os.RemoveAll(archDir)
  		}
  		srcDir = newSrcDir
 -
