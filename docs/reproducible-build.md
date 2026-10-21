@@ -23,7 +23,7 @@ an `fdroiddata` recipe.
 
 | Artifact | Source | Pinned by | Built by |
 | --- | --- | --- | --- |
-| `libv2ray.aar` (Xray core + JNI bindings) | [`AcideFluorhydrique/AndroidLibXrayLite`](https://github.com/AcideFluorhydrique/AndroidLibXrayLite), whose `main` mirrors [`2dust/AndroidLibXrayLite`](https://github.com/2dust/AndroidLibXrayLite) unchanged | git submodule | `gomobile bind` in CI |
+| `libv2ray.aar` (Xray core + JNI bindings) | [`AcideFluorhydrique/AndroidLibXrayLite`](https://github.com/AcideFluorhydrique/AndroidLibXrayLite), whose `main` mirrors [`2dust/AndroidLibXrayLite`](https://github.com/2dust/AndroidLibXrayLite) unchanged | git submodule | `build-libv2ray.sh` (patched `gomobile bind`) |
 | `libhev-socks5-tunnel.so` (in-process tun2socks for `VpnService`) | [`heiher/hev-socks5-tunnel`](https://github.com/heiher/hev-socks5-tunnel) | git submodule | `compile-hevtun.sh` (`ndk-build`) |
 | `libhevsockstun.so` (standalone binary for root mode) | same submodule | git submodule | `compile-hevtun.sh` (`ndk-build`) |
 | `geoip.dat`, `geosite.dat`, `geoip-only-cn-private.dat` (routing databases, inside the aar) | [`AcideFluorhydrique/forkray-geodata`](https://github.com/AcideFluorhydrique/forkray-geodata) | git submodule | its `scripts/build.sh` |
@@ -94,16 +94,16 @@ get different bytes — the Go version in particular is embedded in the compiled
 | Component | Version | Where it is pinned |
 | --- | --- | --- |
 | Go | 1.27.1 | workflow `GO_VERSION` |
-| `gomobile` | the `golang.org/x/mobile` revision in `AndroidLibXrayLite/go.mod` | resolved at build time via `go list -m` |
+| `gomobile` | the `golang.org/x/mobile` revision in `AndroidLibXrayLite/go.mod`, plus `patches/gomobile-build-in-module.patch` | resolved at build time via `go list -m` |
 | Android NDK | 29.0.14206865 | workflow `NDK_VERSION` **and** `android.ndkVersion` |
 | Android cmdline-tools | 14742923 | workflow `CMDLINE_TOOLS_VERSION` |
 | Android platform / build-tools | android-37.0 / 37.0.0 | workflow `SDK_PACKAGES` |
-| JDK for Gradle | Temurin 21.0.12.1+1 (Adoptium semver `21.0.12+101.0.LTS`) | workflow `JAVA_VERSION` |
-| JDK for `gomobile` | Temurin 17.0.20.1+1 (Adoptium semver `17.0.20+101`) | workflow `GOMOBILE_JAVA_VERSION` |
+| JDK, for Gradle and for `gomobile`'s `javac` | Temurin 21.0.12.1+1 (Adoptium semver `21.0.12+101.0.LTS`) | workflow `JAVA_VERSION` |
 | AGP / Kotlin / dependencies | see `V2rayNG/gradle/libs.versions.toml` | Gradle |
-| `gomobile -androidapi` | 24 | workflow `GOMOBILE_ANDROID_API`, must equal `minSdk` |
+| `gomobile -androidapi` | 24 | `ANDROID_API` in `build-libv2ray.sh`, must equal `minSdk` |
 
-Two notes on the Go side:
+Notes on the Go side. All of it is in `build-libv2ray.sh`, which both the
+workflow and the F-Droid recipe run:
 
 - `gomobile` is installed at the exact `golang.org/x/mobile` version the module
   already depends on, not `@latest` as the upstream `AndroidLibXrayLite`
@@ -114,14 +114,26 @@ Two notes on the Go side:
   cover it. This does not hurt reproducibility — `tidy` resolves minimum
   versions and never upgrades — but the workflow warns if it actually modifies
   `go.mod`/`go.sum`, since that would mean the committed files were incomplete.
+- `gomobile` is patched (`patches/gomobile-build-in-module.patch`) to build its
+  `gobind` package inside the bound module. Unpatched, it builds `gobind` as a
+  separate module whose `go.mod` replaces `AndroidLibXrayLite` with its absolute
+  directory, and Go writes that directory into `libgojni.so`'s build info;
+  `-trimpath` does not remove it. Every APK then depended on the checkout path,
+  which went unnoticed while every build ran in the same GitHub directory, and
+  was found when F-Droid's buildserver rebuilt the app elsewhere. The script
+  fails if a library still contains the directory it was built in.
+  SagerNet/gomobile, which sing-box uses, fixes it the same way.
+- The build runs with `-buildvcs=false`, since building inside the module would
+  otherwise stamp the submodule's git state into the binary.
 - `GOTOOLCHAIN=local` is set so Go refuses to silently fetch a toolchain other
   than the pinned one. The Go version string is embedded in the compiled `.so`
   files, so an automatic upgrade would change the output without any signal.
 
 ## Reproducing a build by hand
 
-On a Linux host with the pinned JDK, Android SDK and NDK installed, and
-`NDK_HOME` / `ANDROID_NDK_HOME` pointing at NDK 29.0.14206865:
+On a Linux host with the pinned Go, JDK, Android SDK and NDK installed,
+`ANDROID_HOME` set, and `NDK_HOME` / `ANDROID_NDK_HOME` pointing at NDK
+29.0.14206865. The checkout can be anywhere:
 
 ```bash
 git clone --recurse-submodules https://github.com/AcideFluorhydrique/v2rayNG.git
@@ -129,29 +141,10 @@ cd v2rayNG
 git checkout <the tag or commit the APK was built from>
 git submodule update --init --recursive
 
-# 1. libv2ray.aar
-cd AndroidLibXrayLite
-mkdir -p assets
-
-# Geo data, built from the forkray-geodata submodule (needs Python 3). Do NOT
-# run gen_assets.sh: it downloads prebuilt files from releases/latest.
-bash ../forkray-geodata/scripts/build.sh
-rm -f assets/*.dat
-cp ../forkray-geodata/out/*.dat assets/
-
-# gomobile's javac must be Temurin 17.0.20.1+1 (put it first on PATH here)
-go install "golang.org/x/mobile/cmd/gomobile@$(go list -m -f "{{.Version}}" golang.org/x/mobile)"
-export PATH="$PATH:$(go env GOPATH)/bin"
-gomobile init
+# 1. libv2ray.aar, with the geo data from forkray-geodata (needs Python 3).
+#    Do NOT run AndroidLibXrayLite's gen_assets.sh: it downloads prebuilt files.
 export GOTOOLCHAIN=local
-go mod tidy
-go mod download
-gomobile bind -v \
-  -target=android/arm,android/arm64,android/386,android/amd64 \
-  -androidapi 24 -trimpath \
-  -ldflags='-s -w -buildid= -checklinkname=0' \
-  -o libv2ray.aar ./
-cd ..
+bash build-libv2ray.sh "$PWD/AndroidLibXrayLite/libv2ray.aar"
 
 # 2. hev-socks5-tunnel
 bash compile-hevtun.sh
@@ -161,7 +154,9 @@ mkdir -p V2rayNG/app/libs
 cp -r libs/. V2rayNG/app/libs/
 cp AndroidLibXrayLite/libv2ray.aar V2rayNG/app/libs/
 
-# 4. APKs, with Temurin 21.0.12.1+1 as the active JDK
+# 4. APKs. Build every ABI in one run, as here: BuildConfig.VERSION_CODE takes
+#    the universal APK's version code, so a build restricted to one ABI with
+#    -PABI_FILTERS produces a different classes.dex.
 cd V2rayNG
 echo "sdk.dir=${ANDROID_HOME}" > local.properties
 ./gradlew licenseFdroidReleaseReport
@@ -185,11 +180,12 @@ which would make a comparison meaningless. Run the workflow manually with
 run also declines to write its results back to the cache, so it does not disturb
 the existing entry.
 
-There are two JDKs. `gomobile bind` compiles the aar's generated Java bindings
-into `classes.jar` with `javac`, so the JDK on the path at that point is part of
-the aar. Until this was noticed the workflow set Java up only later, for Gradle,
-leaving `gomobile` on the runner image's default JDK. It is now pinned to that
-same default, Temurin 17, and is part of the `libv2ray.aar` cache key.
+`gomobile bind` compiles the aar's generated Java bindings into `classes.jar`
+with `javac`, so the JDK is part of the aar as well as of the APK. One JDK, the
+pinned Temurin 21, does both; it is part of the `libv2ray.aar` cache key. It
+used to be the runner image's default Temurin 17 for `gomobile`, and moved to 21
+because F-Droid's buildserver has Debian's OpenJDK 21: that build of the same
+JDK version produced identical output.
 
 The JDKs are pinned to exact Temurin builds for the same reason as Go. Only the
 full Adoptium semver form in `JAVA_VERSION` achieves that: `setup-java` checks
@@ -274,13 +270,15 @@ These are unresolved and should be treated as work items, not as settled:
   list whose licence is not stated), and `geosite.dat` is about a fifth of the
   size. Whether mainland sites still route directly well enough needs testing
   from inside mainland China.
-- **In-app updater.** `UpdateCheckerManager` fetches APK download URLs from
-  GitHub releases. IzzyOnDroid tolerates this (with an anti-feature flag);
-  F-Droid normally requires it gated off for their build. Not addressed here.
-- **`gradle-wrapper.jar`** is the one binary still committed to the repository.
-  F-Droid's build server uses its own Gradle, so it is unused there, but their
-  scanner may still flag it.
-- **Go version availability.** `AndroidLibXrayLite/go.mod` tracks Xray-core
-  closely and currently requires Go 1.27. F-Droid's build server is Debian-based
-  and its packaged Go may lag behind, which is a real risk for an `fdroiddata`
-  recipe even though it is a non-issue on GitHub Actions.
+- **Committed binaries.** `gradle-wrapper.jar` is the only binary committed to
+  this repository; F-Droid's scanner removes it and uses its own Gradle. The
+  submodules carry two more that the build does not use: `AndroidLibXrayLite`
+  commits prebuilt `assets/*.dat`, which `build-libv2ray.sh` replaces, and
+  `hev-socks5-tunnel` commits a Windows `wintun.dll`. The F-Droid recipe deletes
+  all three before building.
+- **Go on F-Droid's buildserver.** `AndroidLibXrayLite/go.mod` tracks Xray-core
+  closely and needs a recent Go. The F-Droid recipe builds the pinned Go from
+  source (the `go` srclib), bootstrapped with Debian's packaged Go, and that
+  toolchain produced the same libraries as the official Go release used here.
+  A new Go minor version needs a bootstrap Go recent enough to build it, which
+  Debian's backports usually provide only some time after the release.

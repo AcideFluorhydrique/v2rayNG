@@ -51,14 +51,10 @@ env:
   # matches nothing on Adoptium, so it fails once the image moves on. And
   # '21.0.12+101' matches nothing at all. To update, copy the `semver` field from
   # https://api.adoptium.net/v3/info/release_versions?release_type=ga&version=%5B21,22)
+  # Also the JDK gomobile runs javac from to compile the aar's Java bindings
+  # (classes.jar), so it is part of the aar too. F-Droid's buildserver has
+  # Debian's OpenJDK 21, so both stay on 21.
   JAVA_VERSION: '21.0.12+101.0.LTS'
-  # The JDK gomobile runs javac from to compile the aar's Java bindings
-  # (classes.jar), so it is part of the aar. Before this was pinned the runner
-  # image's default JDK was used; this is that default, Temurin 17.0.20.1+1,
-  # in the Adoptium semver form. Note that 17 has no `.0.LTS` suffix.
-  GOMOBILE_JAVA_VERSION: '17.0.20+101'
-  # Must match minSdk in V2rayNG/app/build.gradle.kts.
-  GOMOBILE_ANDROID_API: '24'
   # Only release.yml signs. Every other run produces unsigned APKs, so builds of
   # unreviewed commits, such as upstream-sync PRs, never carry the release
   # signature and the keystore is decoded only when a release is being made.
@@ -114,6 +110,12 @@ jobs:
           echo "NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
 
+      - name: Setup Java
+        uses: actions/setup-java@v6.0.0
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
       # ---------------------------------------------------------------------
       # libv2ray.aar - built from the AndroidLibXrayLite submodule with
       # gomobile. This is the step that build.yml replaces with a download of
@@ -127,7 +129,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ${{ github.workspace }}/aar
-          key: libv2ray-${{ runner.os }}-${{ steps.revs.outputs.xray_rev }}-go${{ env.GO_VERSION }}-ndk${{ env.NDK_VERSION }}-api${{ env.GOMOBILE_ANDROID_API }}-jdk${{ env.GOMOBILE_JAVA_VERSION }}-geo${{ steps.revs.outputs.geodata_rev }}
+          key: libv2ray-${{ runner.os }}-${{ steps.revs.outputs.xray_rev }}-go${{ env.GO_VERSION }}-ndk${{ env.NDK_VERSION }}-jdk${{ env.JAVA_VERSION }}-geo${{ steps.revs.outputs.geodata_rev }}-${{ hashFiles('build-libv2ray.sh', 'patches/gomobile-build-in-module.patch') }}
 
       - name: Setup Go
         if: steps.cache-libv2ray-restore.outputs.cache-hit != 'true'
@@ -137,13 +139,6 @@ jobs:
           cache-dependency-path: |
             AndroidLibXrayLite/go.sum
             forkray-geodata/tools/go.sum
-
-      - name: Setup Java for gomobile
-        if: steps.cache-libv2ray-restore.outputs.cache-hit != 'true'
-        uses: actions/setup-java@v6.0.0
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.GOMOBILE_JAVA_VERSION }}
 
       - name: Build libv2ray.aar from source
         if: steps.cache-libv2ray-restore.outputs.cache-hit != 'true'
@@ -155,10 +150,6 @@ jobs:
           BYPASS_CACHE: ${{ inputs.bypass_cache }}
         run: |
           set -euo pipefail
-          cd AndroidLibXrayLite
-
-          REQUIRED_GO=$(awk '/^go /{print $2; exit}' go.mod)
-          echo "go.mod requires go ${REQUIRED_GO}; using $(go version)"
 
           # actions/setup-go restores Go's build cache, which is content
           # addressed: it replays the outputs of a previous compile instead of
@@ -171,58 +162,15 @@ jobs:
             go clean -cache
           fi
 
-          # gomobile is pinned to the golang.org/x/mobile revision this module
-          # already depends on, so the generated binding code matches go.sum.
-          GOMOBILE_VERSION=$(go list -m -f '{{.Version}}' golang.org/x/mobile)
-          echo "gomobile version: ${GOMOBILE_VERSION}"
-          go install "golang.org/x/mobile/cmd/gomobile@${GOMOBILE_VERSION}"
-          export PATH="$PATH:$(go env GOPATH)/bin"
-
-          # Geo data. These .dat databases end up in the aar's assets and so in
-          # the APK. Upstream's gen_assets.sh downloads prebuilt ones, and the
-          # repository commits two more; neither is used. They are built here
-          # from the plain-text sources in the forkray-geodata submodule, whose
-          # build is byte-reproducible from its commit and fails if a category
-          # the routing presets need is missing.
-          bash "${GITHUB_WORKSPACE}/forkray-geodata/scripts/build.sh"
-          rm -f assets/*.dat
-          mkdir -p assets
-          cp "${GITHUB_WORKSPACE}"/forkray-geodata/out/*.dat assets/
-          ls -l assets
-
-          gomobile init
-
-          # gomobile bind runs gobind out of this module, so the module graph has
-          # to cover golang.org/x/mobile/cmd/gobind; `go mod tidy` is what makes
-          # that true. It is safe for reproducibility because tidy resolves
-          # minimum versions and does not upgrade anything, but any change it
-          # makes means the committed go.mod/go.sum were incomplete, so surface
-          # that instead of letting it pass silently.
-          go mod tidy
-          if ! git diff --quiet -- go.mod go.sum; then
-            echo '::warning::go mod tidy modified go.mod/go.sum'
-            git diff --stat -- go.mod go.sum
-          fi
-          go mod download
-
-          gomobile bind -v \
-            -target=android/arm,android/arm64,android/386,android/amd64 \
-            -androidapi "${GOMOBILE_ANDROID_API}" \
-            -trimpath \
-            -ldflags='-s -w -buildid= -checklinkname=0' \
-            -o libv2ray.aar \
-            ./
-
-          mkdir -p "${GITHUB_WORKSPACE}/aar"
-          mv libv2ray.aar "${GITHUB_WORKSPACE}/aar/"
-          ls -l "${GITHUB_WORKSPACE}/aar"
+          # The F-Droid recipe runs the same script.
+          bash build-libv2ray.sh "${GITHUB_WORKSPACE}/aar/libv2ray.aar"
 
       - name: Save libv2ray.aar
         if: ${{ !inputs.bypass_cache && steps.cache-libv2ray-restore.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ github.workspace }}/aar
-          key: libv2ray-${{ runner.os }}-${{ steps.revs.outputs.xray_rev }}-go${{ env.GO_VERSION }}-ndk${{ env.NDK_VERSION }}-api${{ env.GOMOBILE_ANDROID_API }}-jdk${{ env.GOMOBILE_JAVA_VERSION }}-geo${{ steps.revs.outputs.geodata_rev }}
+          key: libv2ray-${{ runner.os }}-${{ steps.revs.outputs.xray_rev }}-go${{ env.GO_VERSION }}-ndk${{ env.NDK_VERSION }}-jdk${{ env.JAVA_VERSION }}-geo${{ steps.revs.outputs.geodata_rev }}-${{ hashFiles('build-libv2ray.sh', 'patches/gomobile-build-in-module.patch') }}
 
       # ---------------------------------------------------------------------
       # hev-socks5-tunnel - already built from source upstream.
@@ -259,12 +207,6 @@ jobs:
           cp aar/libv2ray.aar V2rayNG/app/libs/
           echo "Contents of V2rayNG/app/libs:"
           find V2rayNG/app/libs -type f | sort
-
-      - name: Setup Java
-        uses: actions/setup-java@v6.0.0
-        with:
-          distribution: 'temurin'
-          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Decode keystore
         if: env.SIGN == 'true' && env.HAS_KEYSTORE == 'true'
@@ -352,8 +294,8 @@ jobs:
             echo "ndk: ${NDK_VERSION}"
             echo "cmdline-tools: ${CMDLINE_TOOLS_VERSION}"
             echo "sdk packages: ${SDK_PACKAGES}"
-            echo "gomobile androidapi: ${GOMOBILE_ANDROID_API}"
-            echo "gomobile java requested: ${GOMOBILE_JAVA_VERSION}"
+            echo "gomobile androidapi: $(sed -n 's/^ANDROID_API=//p' build-libv2ray.sh)"
+            echo "gomobile patch: $(sha256sum patches/gomobile-build-in-module.patch | cut -d' ' -f1)"
             echo "java requested: ${JAVA_VERSION}"
             echo "java: $(java -version 2>&1 | head -1)"
             echo "runner image: ${ImageOS:-unknown} ${ImageVersion:-unknown}"

@@ -1,0 +1,64 @@
+Build gomobile's gobind package inside the bound module
+
+Applied by build-libv2ray.sh to golang.org/x/mobile's cmd/gomobile before
+it is installed. Upstream gomobile builds gobind as a separate module whose
+go.mod replaces the bound module with its absolute directory. Go records
+that directory in the library's build info, and -trimpath does not remove
+it, so libgojni.so depended on where the source was checked out. Building
+inside the bound module names no directory. The same approach as
+SagerNet/gomobile@8fe7d39dc4 ("Remove project path from gobind binary").
+
+diff --git a/cmd/gomobile/bind_androidapp.go b/cmd/gomobile/bind_androidapp.go
+--- a/cmd/gomobile/bind_androidapp.go
++++ b/cmd/gomobile/bind_androidapp.go
+@@ -363,32 +363,36 @@ func buildAndroidSO(outputDir string, arch string) error {
+ 	}
+ 
+ 	srcDir := filepath.Join(tmpdir, "src")
++	pkg := "./gobind"
+ 
+ 	if modulesUsed {
+-		// Copy the source directory for each architecture for concurrent building.
+-		newSrcDir := filepath.Join(tmpdir, "src-android-"+arch)
++		// Build the gobind package inside the bound module, under
++		// build/android-<arch>/gobind, instead of as a separate module.
++		// That separate module replaces the bound one with its absolute
++		// directory, which Go records in the library's build info and
++		// -trimpath does not remove, so the output depended on where the
++		// source was checked out. Inside the bound module nothing names a
++		// directory. Each architecture gets its own copy for concurrent
++		// building. Only src/gobind is copied: reverse bindings are not
++		// supported this way.
++		newSrcDir, err := filepath.Abs(filepath.Join("build", "android-"+arch, "gobind"))
++		if err != nil {
++			return err
++		}
+ 		if !buildN {
+-			if err := doCopyAll(newSrcDir, srcDir); err != nil {
++			if err := doCopyAll(newSrcDir, filepath.Join(srcDir, "gobind")); err != nil {
+ 				return err
+ 			}
++			defer os.RemoveAll(filepath.Dir(newSrcDir))
+ 		}
+ 		srcDir = newSrcDir
+-
+-		if err := writeGoMod(srcDir, "android", arch); err != nil {
+-			return err
+-		}
+-
+-		// Run `go mod tidy` to force to create go.sum.
+-		// Without go.sum, `go build` fails as of Go 1.16.
+-		if err := goModTidyAt(srcDir, env); err != nil {
+-			return err
+-		}
++		pkg = "."
+ 	}
+ 
+ 	toolchain := ndk.Toolchain(arch)
+ 	if err := goBuildAt(
+ 		srcDir,
+-		"./gobind",
++		pkg,
+ 		env,
+ 		"-buildmode=c-shared",
+ 		"-o="+filepath.Join(outputDir, "src", "main", "jniLibs", toolchain.abi, "libgojni.so"),

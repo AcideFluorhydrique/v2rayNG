@@ -42,16 +42,15 @@ elif [[ "$go_latest_patch" != "$go_pin" ]]; then
     findings+=("**Go**: ${go_latest_patch} is out; \`GO_VERSION\` is ${go_pin}. Patch releases often carry security fixes.")
 fi
 
-# JDKs: the newest Temurin GA build of each pinned major version.
-for var in JAVA_VERSION GOMOBILE_JAVA_VERSION; do
-    jdk_pin=$(pin "$var")
-    major="${jdk_pin%%.*}"
-    jdk_latest=$(curl -fsSL "https://api.adoptium.net/v3/info/release_versions?release_type=ga&vendor=eclipse&page_size=1&sort_order=DESC&version=%5B${major},$((major + 1))%29" \
-        | json "d['versions'][0]['semver']")
-    if [[ "$jdk_latest" != "$jdk_pin" ]]; then
-        findings+=("**JDK ${major}**: Temurin ${jdk_latest} is out; \`${var}\` is ${jdk_pin}.")
-    fi
-done
+# JDK: the newest Temurin GA build of the pinned major version. It compiles
+# both the app and gomobile's Java bindings.
+jdk_pin=$(pin JAVA_VERSION)
+major="${jdk_pin%%.*}"
+jdk_latest=$(curl -fsSL "https://api.adoptium.net/v3/info/release_versions?release_type=ga&vendor=eclipse&page_size=1&sort_order=DESC&version=%5B${major},$((major + 1))%29" \
+    | json "d['versions'][0]['semver']")
+if [[ "$jdk_latest" != "$jdk_pin" ]]; then
+    findings+=("**JDK ${major}**: Temurin ${jdk_latest} is out; \`JAVA_VERSION\` is ${jdk_pin}.")
+fi
 
 # NDK: follow upstream, whose build.yml installs the NDK its releases use.
 ndk_pin=$(pin NDK_VERSION)
