@@ -1,21 +1,36 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Rules for R8, which build.gradle.kts enables for release builds. Each keeps
+# something the app reaches by name at runtime, where R8 cannot see the use.
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Gson maps these classes to JSON by field name: the profiles, subscriptions
+# and settings stored in MMKV, share links, subscription content and the core
+# configuration. A renamed field would silently drop its value, and a removed
+# no-argument constructor would make Gson skip Kotlin's default values. The
+# Serializable messages passed between processes live here too.
+-keep class com.v2ray.ang.dto.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Enum constants are stored and parsed by name.
+-keepclassmembers enum com.v2ray.ang.** {
+    <fields>;
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Gson needs generic signatures for TypeToken and annotations for
+# @SerializedName.
+-keepattributes Signature,*Annotation*,InnerClasses,EnclosingMethod
+
+# hev-socks5-tunnel registers its natives on this class by name
+# (FindClass and RegisterNatives in hev-jni.c, PKGNAME in compile-hevtun.sh).
+-keep class com.v2ray.ang.service.TProxyService {
+    native <methods>;
+}
+
+# gomobile bindings for the Xray core: Go calls into these by name.
+-keep class go.** { *; }
+-keep class libv2ray.** { *; }
+
+# MMKV calls back into Java from native code.
+-keep class com.tencent.mmkv.** { *; }
+
+# Keep stack traces in bug reports readable.
+-keepattributes SourceFile,LineNumberTable
