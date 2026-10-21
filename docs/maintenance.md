@@ -219,6 +219,7 @@ change, which has to edit the upstream code that makes those requests:
 | No silent direct connections ([docs/network.md](network.md)) | `handler/FetchRoutePolicy.kt` and `ui/compose/DirectRetryDialog.kt` are fork-only. The callers (subscription update, geo files, per-app list) are upstream files edited in a few places, so upstream changes to them can conflict: keep each fetch going through `FetchRoutePolicy.fetch`, with upstream's own order as its `legacyOrder`. |
 | Strings for fork-only features, in every locale | `V2rayNG/app/src/main/res/values*/strings_forkray.xml`, never `strings.xml`. `values-bqi-rIR` holds Persian text until there is a Bakhtiari translation. |
 | Shortcuts | `V2rayNG/app/src/fdroid/res/xml/shortcuts.xml` |
+| R8 for release builds, which F-Droid asked for | `isMinifyEnabled` in `V2rayNG/app/build.gradle.kts` and the rules in `V2rayNG/app/proguard-rules.pro`, both upstream files. If upstream adds a class that Gson maps outside `com.v2ray.ang.dto`, or a new JNI entry point, add a rule for it, or that feature breaks only in release builds. |
 | README | `.github/README.md`, which GitHub shows in place of upstream's `README.md`; that one stays unchanged. |
 
 The HTTP User-Agent stays `v2rayNG/<version>` on purpose: some subscription
