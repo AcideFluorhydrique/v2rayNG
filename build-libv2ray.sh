@@ -58,7 +58,12 @@ gomobile init
 # makes means the committed go.mod/go.sum were incomplete, so say so.
 go mod tidy
 if ! git diff --quiet -- go.mod go.sum; then
-    echo 'warning: go mod tidy modified go.mod/go.sum'
+    # GitHub Actions shows ::warning:: lines as annotations on the run.
+    if [[ -n "${GITHUB_ACTIONS:-}" ]]; then
+        echo '::warning::go mod tidy modified go.mod/go.sum'
+    else
+        echo 'warning: go mod tidy modified go.mod/go.sum'
+    fi
     git diff --stat -- go.mod go.sum
 fi
 go mod download
