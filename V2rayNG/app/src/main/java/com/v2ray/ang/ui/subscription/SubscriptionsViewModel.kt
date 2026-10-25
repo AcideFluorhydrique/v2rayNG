@@ -151,6 +151,9 @@ class SubscriptionsViewModel(application: Application) : BaseViewModel(applicati
                     else ->
                         toast(getString(R.string.title_update_subscription_result, result.configCount, result.successCount, result.failureCount, result.skipCount))
                 }
+                if (result.configCount > 0) {
+                    SettingsChangeManager.makeSetupGroupTab()
+                }
                 reload()
                 if (result.directRetrySubIds.isNotEmpty()) {
                     _directRetrySubIds.value = result.directRetrySubIds
