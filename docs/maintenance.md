@@ -199,6 +199,7 @@ can be batched; ones that update the core should not be.
 | Merge conflicts | rarely, about once a year so far | Arrive as an issue with the conflicted files and the commands to resolve them. |
 | Pin bumps | when the pin report says so | Go, JDKs, NDK, the `forkray-geodata` submodule. One commit each; the release checksums change with every bump. The comment next to each pin says where its next value comes from. |
 | Go minor upgrades | about twice a year | When AndroidLibXrayLite's `go.mod` moves past `GO_VERSION`, builds fail on purpose (`GOTOOLCHAIN=local`) and the pin report says so. |
+| Refreshing the gomobile patch | when an Xray core update moves `golang.org/x/mobile` and the build stops at `git apply` | `patches/gomobile-build-in-module.patch` changes `buildAndroidSO` in gomobile's `cmd/gomobile/bind_androidapp.go`. Redo the same change on the new version and regenerate the patch; `build-libv2ray.sh` fails if a library contains its build directory, so a patch that applies but no longer works is caught too. |
 | Reproducibility baseline | after upstream upgrades AGP, Gradle or dependencies | The APK bytes change legitimately; compare two runs again as in docs/reproducible-build.md. |
 | A fork-only fix between upstream releases | as needed | Version codes come from upstream's `versionCode`, and a release tag must match `versionName`. Releasing the same upstream version twice therefore needs both raised first (for example `versionName = "2.3.9-1"`), and those lines will conflict with the next upstream sync. Prefer waiting for the next upstream release when you can. |
 | Renewing `SYNC_TOKEN` | at its expiry | Sync keeps working in issue-only mode meanwhile. |
@@ -219,6 +220,7 @@ change, which has to edit the upstream code that makes those requests:
 | No silent direct connections ([docs/network.md](network.md)) | `handler/FetchRoutePolicy.kt` and `ui/compose/DirectRetryDialog.kt` are fork-only. The callers (subscription update, geo files, per-app list) are upstream files edited in a few places, so upstream changes to them can conflict: keep each fetch going through `FetchRoutePolicy.fetch`, with upstream's own order as its `legacyOrder`. |
 | Strings for fork-only features, in every locale | `V2rayNG/app/src/main/res/values*/strings_forkray.xml`, never `strings.xml`. `values-bqi-rIR` holds Persian text until there is a Bakhtiari translation. |
 | Shortcuts | `V2rayNG/app/src/fdroid/res/xml/shortcuts.xml` |
+| R8 for release builds, which F-Droid asked for | `isMinifyEnabled` in `V2rayNG/app/build.gradle.kts` and the rules in `V2rayNG/app/proguard-rules.pro`, both upstream files. If upstream adds a class that Gson maps outside `com.v2ray.ang.dto`, or a new JNI entry point, add a rule for it, or that feature breaks only in release builds. |
 | README | `.github/README.md`, which GitHub shows in place of upstream's `README.md`; that one stays unchanged. |
 
 The HTTP User-Agent stays `v2rayNG/<version>` on purpose: some subscription
