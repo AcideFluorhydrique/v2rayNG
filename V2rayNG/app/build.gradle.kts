@@ -53,9 +53,10 @@ android {
     buildTypes {
         release {
             // R8 shrinks and optimizes the release build, as F-Droid asked for
-            // (fdroiddata!53571). What the app reaches by name at runtime, such
-            // as Gson-mapped classes and JNI entry points, is kept by
-            // proguard-rules.pro. Resource shrinking stays off.
+            // (fdroiddata!53571), without renaming anything (-dontobfuscate in
+            // proguard-rules.pro). What the app reaches by name at runtime, such
+            // as Gson-mapped classes and JNI entry points, is kept there too.
+            // Resource shrinking stays off.
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
