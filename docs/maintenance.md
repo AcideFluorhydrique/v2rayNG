@@ -99,7 +99,7 @@ All of this is under the repository's **Settings**.
 
    | Host | Repository | Secret | Served at |
    | --- | --- | --- | --- |
-   | Codeberg | `lanticy/forkray-fdroid` | `CODEBERG_TOKEN`: an access token with *repository: read and write* | <https://lanticy.codeberg.page/forkray-fdroid/fdroid/repo> |
+   | Codeberg | `lanticy/forkray-fdroid` | `CODEBERG_TOKEN`: an access token with *repository: read and write* | <https://lanticy.codeberg.page/forkray-fdroid/fdroid/repo>, and <https://ray.arielx.is-a.dev/fdroid/repo> |
    | GitLab | `HydrofluoricAcid/forkray-fdroid` | `GITLAB_TOKEN`: a project access token, role *Maintainer*, scope `write_repository` | <https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid/repo> |
    | 0xacab (Riseup's GitLab) | `lanticy/forkray-fdroid` | `OXACAB_TOKEN`: as for GitLab | <https://lanticy.itcouldbewor.se/forkray-fdroid/fdroid/repo> |
 
@@ -116,7 +116,10 @@ All of this is under the repository's **Settings**.
    the run. The GitLab branch is listed a second
    time by its raw address,
    <https://gitlab.com/HydrofluoricAcid/forkray-fdroid/-/raw/pages/fdroid/repo>,
-   which keeps working when only GitLab Pages is down. 0xacab runs GitLab
+   which keeps working when only GitLab Pages is down. The Codeberg site is
+   also served under its own domain, `ray.arielx.is-a.dev`, which Codeberg's
+   Pages webhook redeploys on every push, so it needs no step of its own in
+   `release.yml`; it is listed in `mirrors:` separately. 0xacab runs GitLab
    too and needs the same settings; it serves Pages under `itcouldbewor.se`,
    and its branch is also listed by its raw address. To add a mirror, add it
    to `mirrors:` in `fdroid-repo/config.yml` and give it a step in
@@ -130,6 +133,8 @@ All of this is under the repository's **Settings**.
    signed index: it lists the main address, every mirror, the signing key
    fingerprint and the files on offer, so a new mirror appears on it without
    further work. Give a host a readable name in its `host_label` if needed.
+   The page shows English, with a button to switch to Simplified Chinese;
+   write every new text on it in both, through `t()` or `para()`.
 
 8. **Keep scheduled workflows alive.** GitHub disables scheduled workflows in
    a public repository after 60 days without activity. Regular syncs count as

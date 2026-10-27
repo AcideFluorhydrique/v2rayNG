@@ -11,6 +11,10 @@ carry, is taken from the page fdroidserver generated.
 The same file is published to every mirror, so it uses relative links for the
 files and loads nothing from other sites.
 
+Every text is written in English and in Simplified Chinese. English shows by
+default; a button switches to Chinese and the choice is remembered in the
+browser. Without JavaScript the page stays in English.
+
 Usage: make-landing-page.py <repo directory>   (after `fdroid update`)
 """
 
@@ -39,6 +43,8 @@ def host_label(url):
         return 'GitHub Pages'
     if host.endswith('codeberg.page'):
         return 'Codeberg Pages'
+    if host == 'ray.arielx.is-a.dev':
+        return 'Codeberg Pages, own domain'
     if host.endswith('gitlab.io'):
         return 'GitLab Pages'
     if host == 'gitlab.com' and '/-/raw/' in parts.path:
@@ -50,6 +56,16 @@ def host_label(url):
     if host == 'raw.githubusercontent.com':
         return 'GitHub (raw files)'
     return host
+
+
+def t(en, zh):
+    """Inline text in both languages; CSS shows the selected one."""
+    return f'<span class="l-en">{en}</span><span class="l-zh" lang="zh-CN">{zh}</span>'
+
+
+def para(en, zh):
+    """A paragraph in both languages."""
+    return f'<p class="l-en">{en}</p>\n<p class="l-zh" lang="zh-CN">{zh}</p>'
 
 
 def text(value):
@@ -82,9 +98,9 @@ def render(index, fingerprint):
     def address(url, label):
         return (
             '<li>'
-            f'<span class="where">{e(label)}</span>'
+            f'<span class="where">{label}</span>'
             f'<code>{e(url)}</code>'
-            f'<a class="add" href="{e(add_link(url))}">Add to F-Droid · 添加到 F-Droid</a>'
+            f'<a class="add" href="{e(add_link(url))}">{t('Add to F-Droid', '添加到 F-Droid')}</a>'
             '</li>'
         )
 
@@ -121,21 +137,22 @@ def render(index, fingerprint):
                     '<tr>'
                     + (f'<th rowspan="{len(versions)}" scope="rowgroup">{e(version_name)}</th>' if i == 0 else '')
                     + f'<td><a href="{e(file["name"].lstrip("/"))}">{e(abi)}</a>'
-                    f'<span class="note">{e(note_en)} · {e(note_zh)}</span></td>'
+                    f'<span class="note">{t(e(note_en), e(note_zh))}</span></td>'
                     f'<td class="num">{size(file["size"])}</td>'
                     f'<td><code class="hash">{e(file["sha256"])}</code></td>'
                     '</tr>'
                 )
         links = []
         if meta.get('sourceCode'):
-            links.append(f'<a href="{e(meta["sourceCode"])}">Source code · 源代码</a>')
+            links.append(f'<a href="{e(meta["sourceCode"])}">{t('Source code', '源代码')}</a>')
         if meta.get('issueTracker'):
-            links.append(f'<a href="{e(meta["issueTracker"])}">Report a problem · 反馈问题</a>')
+            links.append(f'<a href="{e(meta["issueTracker"])}">{t('Report a problem', '反馈问题')}</a>')
         package_sections.append(
             f'<h3>{e(text(meta.get("name")) or package_id)} <span class="id">{e(package_id)}</span></h3>'
             f'<p>{e(text(meta.get("summary")))}</p>'
             '<div class="scroll"><table>'
-            '<thead><tr><th>Version · 版本</th><th>Build · 架构</th><th>Size · 大小</th><th>SHA-256</th></tr></thead>'
+            f'<thead><tr><th>{t('Version', '版本')}</th><th>{t('Build', '架构')}</th>'
+            f'<th>{t('Size', '大小')}</th><th>SHA-256</th></tr></thead>'
             f'<tbody>{"".join(rows)}</tbody></table></div>'
             + (f'<p class="links">{" · ".join(links)}</p>' if links else '')
         )
@@ -143,27 +160,36 @@ def render(index, fingerprint):
     mirror_block = ''
     if others:
         mirror_block = (
-            '<h2>Mirrors · 镜像</h2>'
-            '<p lang="en">The same repository on other hosts, for when the main address is slow or blocked. '
-            'Add any one that your device can reach. A mirror needs no extra trust: your F-Droid client '
-            'accepts an index only if it is signed with the key below, and once it has the repository it '
-            'learns of every address here and switches between them by itself.</p>'
-            '<p lang="zh-CN">同一个仓库在其他站点上的副本，供主地址缓慢或无法访问时使用。添加任意一个你的设备能连上的'
-            '地址即可。镜像不需要额外信任：F-Droid 客户端只接受用下方密钥签名的索引；添加仓库之后，客户端会'
-            '自动得知这里列出的全部地址，并在它们之间自行切换。</p>'
-            f'<ul class="addresses">{"".join(address(u, host_label(u)) for u in others)}</ul>'
+            f'<h2>{t('Mirrors', '镜像')}</h2>'
+            + para(
+                'The same repository on other hosts, for when the main address is slow or blocked. '
+                'Add any one that your device can reach. A mirror needs no extra trust: your F-Droid client '
+                'accepts an index only if it is signed with the key below, and once it has the repository it '
+                'learns of every address here and switches between them by itself.',
+                '同一个仓库在其他站点上的副本，供主地址缓慢或无法访问时使用。添加任意一个你的设备能连上的'
+                '地址即可。镜像不需要额外信任：F-Droid 客户端只接受用下方密钥签名的索引；添加仓库之后，客户端会'
+                '自动得知这里列出的全部地址，并在它们之间自行切换。',
+            )
+            + f'<ul class="addresses">{"".join(address(u, e(host_label(u))) for u in others)}</ul>'
         )
 
     signer_block = ''
     if signers:
         signer_block = (
-            '<h2>APK signing certificate · APK 签名证书</h2>'
-            '<p lang="en">Every APK here is signed with this certificate (SHA-256); '
-            '<code>apksigner verify --print-certs</code> prints it.</p>'
-            '<p lang="zh-CN">这里的每个 APK 都使用此证书签名（SHA-256），'
-            '可用 <code>apksigner verify --print-certs</code> 核对。</p>'
+            f'<h2>{t('APK signing certificate', 'APK 签名证书')}</h2>'
+            + para(
+                'Every APK here is signed with this certificate (SHA-256); '
+                '<code>apksigner verify --print-certs</code> prints it.',
+                '这里的每个 APK 都使用此证书签名（SHA-256），'
+                '可用 <code>apksigner verify --print-certs</code> 核对。',
+            )
             + ''.join(f'<pre>{e(s)}</pre>' for s in sorted(signers))
         )
+
+    title_en = f'{name} F-Droid repository'
+    title_zh = f'{name} 的 F-Droid 仓库'
+    stamp = updated.strftime('%Y-%m-%d %H:%M')
+    main_label = f"{e(host_label(primary))} · {t('main address', '主地址')}"
 
     return f'''<!DOCTYPE html>
 <!-- Generated by fdroid-repo/make-landing-page.py from the signed index; do not edit. -->
@@ -172,7 +198,7 @@ def render(index, fingerprint):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="index,nofollow">
-<title>{e(name)} F-Droid repository</title>
+<title>{e(title_en)}</title>
 <link rel="icon" type="image/png" href="icons/icon.png">
 <style>
 :root {{ color-scheme: light dark; --fg: #1b1f24; --muted: #5b6570; --bg: #ffffff; --panel: #f3f5f7; --line: #d5dae0; --link: #0b5fbf; }}
@@ -186,7 +212,10 @@ h1 {{ font-size: 1.5rem; line-height: 1.3; margin: 0; }}
 h2 {{ font-size: 1.15rem; margin: 2.2rem 0 .6rem; padding-top: 1rem; border-top: 1px solid var(--line); }}
 h3 {{ font-size: 1rem; margin: 1.2rem 0 .2rem; }}
 p {{ margin: .5rem 0; overflow-wrap: anywhere; }}
-p[lang="zh-CN"] {{ color: var(--muted); }}
+html:not(.zh) .l-zh, html.zh .l-en {{ display: none !important; }}
+.lang {{ margin-left: auto; align-self: flex-start; flex-shrink: 0; white-space: nowrap; font: inherit; font-size: .875rem; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: .3rem .9rem; cursor: pointer; }}
+.lang:hover {{ border-color: var(--link); }}
+.lang:focus-visible {{ outline: 2px solid var(--link); outline-offset: 2px; }}
 a {{ color: var(--link); }}
 code, pre {{ font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace; font-size: .875rem; }}
 pre {{ background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: .7rem .8rem; margin: .5rem 0; white-space: pre-wrap; word-break: break-all; }}
@@ -213,34 +242,52 @@ footer {{ margin-top: 2.5rem; color: var(--muted); font-size: .8125rem; }}
 <main>
 <header>
 <img src="icons/icon.png" alt="">
-<h1>{e(name)} F-Droid repository<br><span lang="zh-CN">{e(name)} 的 F-Droid 仓库</span></h1>
+<h1>{t(e(title_en), e(title_zh))}</h1>
+<button class="lang" id="lang" type="button" hidden>中文</button>
 </header>
 
-<p lang="en">{e(text(repo.get('description')))}</p>
-<p lang="zh-CN">{e(name)} 是 v2rayNG 的分支，全部在 GitHub Actions 上从源代码构建。每个版本都附带构建清单，列出确切的源代码、工具链和校验和，可以重新构建并逐字节比对。</p>
+{para(e(text(repo.get('description'))), f'{e(name)} 是 v2rayNG 的分支，全部在 GitHub Actions 上从源代码构建。每个版本都附带构建清单，列出确切的源代码、工具链和校验和，可以重新构建并逐字节比对。')}
 
-<h2>Add the repository · 添加仓库</h2>
-<p lang="en">In your F-Droid client (F-Droid, Droid-ify, Neo Store…), add this address, or scan the QR code. Then install and update {e(name)} from there.</p>
-<p lang="zh-CN">在 F-Droid 客户端（F-Droid、Droid-ify、Neo Store 等）中添加下面的地址，或扫描二维码，之后即可在客户端里安装和更新 {e(name)}。</p>
+<h2>{t('Add the repository', '添加仓库')}</h2>
+{para(f'In your F-Droid client (F-Droid, Droid-ify, Neo Store…), add this address, or scan the QR code. Then install and update {e(name)} from there.', f'在 F-Droid 客户端（F-Droid、Droid-ify、Neo Store 等）中添加下面的地址，或扫描二维码，之后即可在客户端里安装和更新 {e(name)}。')}
 <div class="primary">
-<ul class="addresses">{address(primary, host_label(primary) + ' · main address · 主地址')}</ul>
-<a href="index.png"><img src="index.png" alt="QR code of the main address · 主地址的二维码"></a>
+<ul class="addresses">{address(primary, main_label)}</ul>
+<a href="index.png"><img src="index.png" alt="QR code of the main address" data-alt-zh="主地址的二维码"></a>
 </div>
 {mirror_block}
-<h2>Repository signing key · 仓库签名密钥</h2>
-<p lang="en">The SHA-256 fingerprint of the key that signs this repository's index, on every address above. The links above already carry it; compare it by hand if you type an address in yourself.</p>
-<p lang="zh-CN">为本仓库索引签名的密钥的 SHA-256 指纹，以上所有地址均相同。上面的链接已包含该指纹；如果手动输入地址，请自行核对。</p>
+<h2>{t('Repository signing key', '仓库签名密钥')}</h2>
+{para("The SHA-256 fingerprint of the key that signs this repository's index, on every address above. The links above already carry it; compare it by hand if you type an address in yourself.", '为本仓库索引签名的密钥的 SHA-256 指纹，以上所有地址均相同。上面的链接已包含该指纹；如果手动输入地址，请自行核对。')}
 <pre>{e(spaced(fingerprint))}</pre>
 
-<h2>Available now · 当前提供</h2>
-<p lang="en">Your F-Droid client picks the right build by itself. The files are also here to download directly from this address.</p>
-<p lang="zh-CN">F-Droid 客户端会自动选择合适的架构。也可以直接从当前地址下载以下文件。</p>
+<h2>{t('Available now', '当前提供')}</h2>
+{para('Your F-Droid client picks the right build by itself. The files are also here to download directly from this address.', 'F-Droid 客户端会自动选择合适的架构。也可以直接从当前地址下载以下文件。')}
 {''.join(package_sections)}
 {signer_block}
 <footer>
-<p>Index of {updated.strftime('%Y-%m-%d %H:%M')} UTC · 索引生成于 {updated.strftime('%Y-%m-%d %H:%M')} UTC</p>
+<p>{t(f'Index of {stamp} UTC', f'索引生成于 {stamp} UTC')}</p>
 </footer>
 </main>
+<script>
+// Language switch: English by default, the choice is kept in this browser.
+(function () {{
+  var root = document.documentElement, button = document.getElementById('lang');
+  var qr = document.querySelector('img[data-alt-zh]'), qrEn = qr && qr.alt;
+  function show(zh) {{
+    root.classList.toggle('zh', zh);
+    root.lang = zh ? 'zh-CN' : 'en';
+    document.title = zh ? {json.dumps(title_zh)} : {json.dumps(title_en)};
+    button.textContent = zh ? 'English' : '中文';
+    button.setAttribute('aria-label', zh ? 'Switch to English' : '切换到中文');
+    if (qr) qr.alt = zh ? qr.getAttribute('data-alt-zh') : qrEn;
+    try {{ localStorage.setItem('lang', zh ? 'zh' : 'en'); }} catch (err) {{}}
+  }}
+  var saved = null;
+  try {{ saved = localStorage.getItem('lang'); }} catch (err) {{}}
+  show(saved === 'zh');
+  button.hidden = false;
+  button.addEventListener('click', function () {{ show(!root.classList.contains('zh')); }});
+}})();
+</script>
 </body>
 </html>
 '''
