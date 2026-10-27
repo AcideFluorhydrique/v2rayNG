@@ -27,6 +27,10 @@ archive_older: 0
 mirrors:
   - url: https://lanticy.codeberg.page/forkray-fdroid/fdroid
     countryCode: DE
+  # The same Codeberg site under its own domain, bound to the repository
+  # through Codeberg's Pages webhook; every push to it redeploys this too.
+  - url: https://ray.arielx.is-a.dev/fdroid
+    countryCode: DE
   - url: https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid
     countryCode: US
   # The same branch read straight from the GitLab repository, for when GitLab
