@@ -60,6 +60,14 @@ def host_label(url):
     return host
 
 
+def flag(country_code):
+    """The mirror's countryCode as a flag emoji, or a globe for one behind an
+    anycast CDN, which config.yml lists without a countryCode."""
+    if not country_code:
+        return '\N{GLOBE WITH MERIDIANS}'
+    return ''.join(chr(0x1F1E6 + ord(c) - ord('A')) for c in country_code.upper())
+
+
 def t(en, zh):
     """Inline text in both languages; CSS shows the selected one."""
     return f'<span class="l-en">{en}</span><span class="l-zh" lang="zh-CN">{zh}</span>'
@@ -90,17 +98,19 @@ def render(index, fingerprint):
     repo = index['repo']
     name = text(repo['name'])
     mirrors = repo.get('mirrors') or [{'url': repo['address'], 'isPrimary': True}]
-    primary = next((m['url'] for m in mirrors if m.get('isPrimary')), repo['address'])
-    others = [m['url'] for m in mirrors if m['url'] != primary]
+    primary_mirror = next((m for m in mirrors if m.get('isPrimary')), {'url': repo['address']})
+    primary = primary_mirror['url']
+    others = [m for m in mirrors if m['url'] != primary]
     updated = datetime.datetime.fromtimestamp(repo['timestamp'] / 1000, datetime.timezone.utc)
 
     def add_link(url):
         return f'https://fdroid.link/#{url}?fingerprint={fingerprint}'
 
-    def address(url, label):
+    def address(url, label, country_code):
         return (
             '<li>'
-            f'<span class="where">{label}</span>'
+            f'<span class="where"><span class="flag" title="{e(country_code or 'CDN')}">'
+            f'{flag(country_code)}</span> {label}</span>'
             f'<code>{e(url)}</code>'
             f'<a class="add" href="{e(add_link(url))}">{t('Add to F-Droid', '添加到 F-Droid')}</a>'
             '</li>'
@@ -172,7 +182,7 @@ def render(index, fingerprint):
                 '地址即可。镜像不需要额外信任：F-Droid 客户端只接受用下方密钥签名的索引；添加仓库之后，客户端会'
                 '自动得知这里列出的全部地址，并在它们之间自行切换。',
             )
-            + f'<ul class="addresses">{"".join(address(u, e(host_label(u))) for u in others)}</ul>'
+            + f'<ul class="addresses">{"".join(address(m['url'], e(host_label(m['url'])), m.get('countryCode')) for m in others)}</ul>'
         )
 
     signer_block = ''
@@ -253,7 +263,7 @@ footer {{ margin-top: 2.5rem; color: var(--muted); font-size: .8125rem; }}
 <h2>{t('Add the repository', '添加仓库')}</h2>
 {para(f'In your F-Droid client (F-Droid, Droid-ify, Neo Store…), add this address, or scan the QR code. Then install and update {e(name)} from there.', f'在 F-Droid 客户端（F-Droid、Droid-ify、Neo Store 等）中添加下面的地址，或扫描二维码，之后即可在客户端里安装和更新 {e(name)}。')}
 <div class="primary">
-<ul class="addresses">{address(primary, main_label)}</ul>
+<ul class="addresses">{address(primary, main_label, primary_mirror.get('countryCode'))}</ul>
 <a href="index.png"><img src="index.png" alt="QR code of the main address" data-alt-zh="主地址的二维码"></a>
 </div>
 {mirror_block}
