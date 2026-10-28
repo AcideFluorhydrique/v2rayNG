@@ -14,6 +14,12 @@
 #
 # The token is read from MIRROR_TOKEN and handed to git through a credential
 # helper, so it never appears in a URL, a command line or the log.
+#
+# For a GitHub Pages mirror, set GH_PAGES=1: the commit then carries a
+# .nojekyll file, so the files are served as they are rather than through
+# Jekyll, and, if PAGES_DOMAIN is set, a CNAME file holding that domain.
+# GitHub keeps a branch-deployed site's custom domain in that file, so a push
+# without it would drop the domain again.
 
 set -o errexit
 set -o pipefail
@@ -42,6 +48,12 @@ mkdir "$work/fdroid"
 cp -R "$SOURCE_DIR" "$work/fdroid/repo"
 if [[ -n "$ci_file" ]]; then
     cp "$ci_file" "$work/.gitlab-ci.yml"
+fi
+if [[ "${GH_PAGES:-}" == 1 ]]; then
+    touch "$work/.nojekyll"
+    if [[ -n "${PAGES_DOMAIN:-}" ]]; then
+        printf '%s\n' "$PAGES_DOMAIN" > "$work/CNAME"
+    fi
 fi
 
 git -C "$work" init --quiet --initial-branch "$BRANCH"
