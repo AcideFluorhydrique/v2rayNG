@@ -41,6 +41,10 @@ mirrors:
     countryCode: US
   - url: https://0xacab.org/lanticy/forkray-fdroid/-/raw/pages/fdroid
     countryCode: US
+  # A GitHub repository of its own, AcideFluorhydrique/forkray-fdroid, so that
+  # its custom domain does not redirect the main address. GitHub Pages is
+  # behind Fastly, hence no countryCode.
+  - url: https://forkray.is-my.app/fdroid
 
 sdk_path: $ANDROID_HOME
 

@@ -102,7 +102,7 @@ All of this is under the repository's **Settings**.
    | Codeberg | `lanticy/forkray-fdroid` | `CODEBERG_TOKEN`: an access token with *repository: read and write* | <https://lanticy.codeberg.page/forkray-fdroid/fdroid/repo>, and <https://ray.arielx.is-a.dev/fdroid/repo> |
    | GitLab | `HydrofluoricAcid/forkray-fdroid` | `GITLAB_TOKEN`: a project access token, role *Maintainer*, scope `write_repository` | <https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid/repo> |
    | 0xacab (Riseup's GitLab) | `lanticy/forkray-fdroid` | `OXACAB_TOKEN`: as for GitLab | <https://lanticy.itcouldbewor.se/forkray-fdroid/fdroid/repo> |
-   | GitHub | `AcideFluorhydrique/forkray-fdroid` | `MIRROR_GITHUB_FORKRAY_FDROID_TOKEN`: a fine-grained personal access token for that repository only, *Contents: Read and write* | the domain in the `FORKRAY_FDROID_DOMAIN` variable, or else <https://acidefluorhydrique.github.io/forkray-fdroid/fdroid/repo> |
+   | GitHub | `AcideFluorhydrique/forkray-fdroid` | `MIRROR_GITHUB_FORKRAY_FDROID_TOKEN`: a fine-grained personal access token for that repository only, *Contents: Read and write* | <https://forkray.is-my.app/fdroid/repo>, the domain in the `FORKRAY_FDROID_DOMAIN` variable, claimed through <https://github.com/jn-aman/is-my.app> |
 
    On GitLab, Deploy → Pages → untick *Use unique domain*, or the site gets a
    random address instead of the one above; set Settings → General →

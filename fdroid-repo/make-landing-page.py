@@ -41,6 +41,8 @@ def host_label(url):
     host = parts.netloc.lower()
     if host.endswith('github.io'):
         return 'GitHub Pages'
+    if host == 'forkray.is-my.app':
+        return 'GitHub Pages, own domain'
     if host.endswith('codeberg.page'):
         return 'Codeberg Pages'
     if host == 'ray.arielx.is-a.dev':
