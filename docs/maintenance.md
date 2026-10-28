@@ -95,14 +95,14 @@ All of this is under the repository's **Settings**.
    so the repository is also published to other hosts. Clients find them
    through the signed index and need no new address. Each is an empty public
    repository that `release.yml` force-pushes one commit to, on a branch
-   named `pages`:
+   named `pages` (`main` on GitHub):
 
    | Host | Repository | Secret | Served at |
    | --- | --- | --- | --- |
    | Codeberg | `lanticy/forkray-fdroid` | `CODEBERG_TOKEN`: an access token with *repository: read and write* | <https://lanticy.codeberg.page/forkray-fdroid/fdroid/repo>, and <https://ray.arielx.is-a.dev/fdroid/repo> |
    | GitLab | `HydrofluoricAcid/forkray-fdroid` | `GITLAB_TOKEN`: a project access token, role *Maintainer*, scope `write_repository` | <https://hydrofluoricacid.gitlab.io/forkray-fdroid/fdroid/repo> |
    | 0xacab (Riseup's GitLab) | `lanticy/forkray-fdroid` | `OXACAB_TOKEN`: as for GitLab | <https://lanticy.itcouldbewor.se/forkray-fdroid/fdroid/repo> |
-   | GitHub | `AcideFluorhydrique/forkray-fdroid` | `FORKRAY_FDROID_TOKEN`: a fine-grained personal access token for that repository only, *Contents: Read and write* | the domain in the `FORKRAY_FDROID_DOMAIN` variable, or else <https://acidefluorhydrique.github.io/forkray-fdroid/fdroid/repo> |
+   | GitHub | `AcideFluorhydrique/forkray-fdroid` | `MIRROR_GITHUB_FORKRAY_FDROID_TOKEN`: a fine-grained personal access token for that repository only, *Contents: Read and write* | the domain in the `FORKRAY_FDROID_DOMAIN` variable, or else <https://acidefluorhydrique.github.io/forkray-fdroid/fdroid/repo> |
 
    On GitLab, Deploy → Pages → untick *Use unique domain*, or the site gets a
    random address instead of the one above; set Settings → General →
@@ -127,8 +127,10 @@ All of this is under the repository's **Settings**.
    The GitHub mirror is a repository of its own so that it can have a custom
    domain: a custom domain on this repository's site would redirect
    <https://acidefluorhydrique.github.io/v2rayNG/> there. Set its Settings →
-   Pages → Source to *Deploy from a branch*, `pages`, `/ (root)`, once the
-   first release has pushed that branch. For the domain, point a DNS `CNAME`
+   Pages → Source to *Deploy from a branch*, `main`, `/ (root)`, once the
+   first release has pushed that branch. Unlike the other mirrors it is
+   published to `main`, the repository's default branch, since nothing else
+   lives there. For the domain, point a DNS `CNAME`
    record for it at `acidefluorhydrique.github.io`, put it in the repository
    variable `FORKRAY_FDROID_DOMAIN` here, enter it under Pages → Custom domain
    there and tick *Enforce HTTPS* once GitHub offers it. A branch-deployed

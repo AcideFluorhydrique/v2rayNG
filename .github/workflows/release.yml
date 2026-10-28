@@ -273,8 +273,9 @@ jobs:
       # address there. The domain is the FORKRAY_FDROID_DOMAIN variable.
       - name: Publish to the GitHub mirror
         env:
-          MIRROR_TOKEN: ${{ secrets.FORKRAY_FDROID_TOKEN }}
+          MIRROR_TOKEN: ${{ secrets.MIRROR_GITHUB_FORKRAY_FDROID_TOKEN }}
           GH_PAGES: 1
+          BRANCH: main
           PAGES_DOMAIN: ${{ vars.FORKRAY_FDROID_DOMAIN }}
         run: |
           bash .github/scripts/publish-mirror.sh \
