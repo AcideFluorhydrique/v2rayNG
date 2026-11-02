@@ -93,7 +93,7 @@ get different bytes — the Go version in particular is embedded in the compiled
 
 | Component | Version | Where it is pinned |
 | --- | --- | --- |
-| Go | 1.27.1 | workflow `GO_VERSION` |
+| Go | 1.27.3 | workflow `GO_VERSION` |
 | `gomobile` | the `golang.org/x/mobile` revision in `AndroidLibXrayLite/go.mod`, plus `patches/gomobile-build-in-module.patch` | resolved at build time via `go list -m` |
 | Android NDK | 29.0.14206865 | workflow `NDK_VERSION` **and** `android.ndkVersion` |
 | Android cmdline-tools | 14742923 | workflow `CMDLINE_TOOLS_VERSION` |

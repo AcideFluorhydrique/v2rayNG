@@ -43,7 +43,7 @@ env:
   CMDLINE_TOOLS_VERSION: '14742923'
   SDK_PACKAGES: 'platforms;android-37.0 build-tools;37.0.0 platform-tools'
   NDK_VERSION: '29.0.14206865'
-  GO_VERSION: '1.27.1'
+  GO_VERSION: '1.27.3'
   # Exact Temurin build: this is 21.0.12.1+1, written as the Adoptium
   # `version_data.semver` that setup-java matches against. Only the full form
   # pins anything. '21' and '21.0.12' take whatever JDK the runner image has
