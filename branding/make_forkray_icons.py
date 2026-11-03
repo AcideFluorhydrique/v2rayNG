@@ -49,7 +49,12 @@ def edge(y: float) -> float:
 ARM = 32.0          # arm thickness, close to the V diagonal's stroke weight
 STEM_RIGHT = 184.0
 TOP = 139.0
-MIDDLE_TOP = 206.0
+# Where the outer edge meets the stem: the foot's slanted cut starts here.
+FOOT_TOP = (434.9 - STEM_RIGHT) / 0.94
+# The middle arm sits halfway between the top arm and the foot, so the two
+# notches are equally deep along the slanted edge (about 32 px each, as thick
+# as the arms) rather than 35 above and 29 below.
+MIDDLE_TOP = (TOP + ARM + FOOT_TOP - ARM) / 2
 
 F_POLYGON = [
     (137.0, TOP),                                    # flag, top left
@@ -60,7 +65,7 @@ F_POLYGON = [
     (edge(MIDDLE_TOP), MIDDLE_TOP),
     (edge(MIDDLE_TOP + ARM), MIDDLE_TOP + ARM),
     (STEM_RIGHT, MIDDLE_TOP + ARM),
-    (STEM_RIGHT, (434.9 - STEM_RIGHT) / 0.94),       # foot of the stem, on the edge
+    (STEM_RIGHT, FOOT_TOP),                          # foot of the stem, on the edge
     (156.0, 296.7),                                  # the V's bottom tip
     (156.0, 158.0),                                  # flag, bottom
     (137.0, 158.0),
