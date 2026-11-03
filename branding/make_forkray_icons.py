@@ -13,7 +13,11 @@ drew it. Outputs go to the fdroid flavor's resources, which override the main
 ones, so upstream's files stay untouched and upstream merges never conflict.
 
 The store icon in fastlane/ is itself replaced by Forkray's, so its upstream
-original is read from git, at UPSTREAM_REF (default: upstream/master).
+original is read from git, at UPSTREAM_REF (default: upstream/master). It is
+the one image that departs from upstream's: its card is enlarged to fill the
+whole image, without the transparent margin and drop shadow of a legacy
+launcher icon, which on the white pages of f-droid.org and of this fork's own
+repository only made the icon look small and framed in empty space.
 
 Requires Pillow and a fetched `upstream` remote. Run from the repository root:
 
@@ -145,6 +149,36 @@ def recolor_on_card(src, dst: Path) -> None:
     save(image, dst)
 
 
+def card_filling_image(src, dst: Path) -> None:
+    """Black glyph on upstream's card, the card scaled up to fill the image
+    (store icon)."""
+    original = Image.open(src).convert("RGBA")
+    px = original.load()
+    glyph = glyph_box(original, dark)
+    card_colour = px[max(int(glyph[0]) - 6, 0), int((glyph[1] + glyph[3]) / 2)]
+
+    def on_card(p) -> bool:
+        return p[3] > 250 and all(abs(a - b) <= 2 for a, b in zip(p[:3], card_colour[:3]))
+
+    # The card's bounding box, and its corner radius: how far along its top
+    # row the rounded corner starts.
+    card = glyph_box(original, on_card)
+    top = int(card[1])
+    radius = next(x for x in range(int(card[0]), int(card[2])) if on_card(px[x, top])) - card[0]
+
+    size = original.size
+    scale = size[0] / (card[2] - card[0])
+    big = Image.new("L", (size[0] * SUPERSAMPLE, size[1] * SUPERSAMPLE), 0)
+    ImageDraw.Draw(big).rounded_rectangle(
+        (0, 0, big.width - 1, big.height - 1), radius=radius * scale * SUPERSAMPLE, fill=255
+    )
+    image = Image.new("RGBA", size, (0, 0, 0, 0))
+    image.paste(Image.new("RGBA", size, card_colour), mask=big.resize(size, Image.Resampling.LANCZOS))
+    box = tuple((v - card[i % 2]) * scale for i, v in enumerate(glyph))
+    image.paste(Image.new("RGBA", size, (0, 0, 0, 255)), mask=glyph_mask(size, box))
+    save(image, dst)
+
+
 def redraw_on_transparent(src: Path, dst: Path, colour) -> None:
     """Glyph alone on transparency (adaptive foreground, status bar icon)."""
     original = Image.open(src).convert("RGBA")
@@ -176,7 +210,7 @@ def main() -> None:
             FDROID_RES / f"drawable-{d}/ic_stat_name.png",
             (255, 255, 255, 255),
         )
-    recolor_on_card(upstream_file(STORE_ICON), ROOT / STORE_ICON)
+    card_filling_image(upstream_file(STORE_ICON), ROOT / STORE_ICON)
 
 
 if __name__ == "__main__":
