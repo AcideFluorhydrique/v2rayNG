@@ -46,12 +46,10 @@ certificate under [Verify](#verify), so you can switch between them without
 reinstalling.
 
 <p>
-  <!-- Add once the official F-Droid repository has published a Forkray release
-       signed with the certificate under Verify:
+
   <a href="https://f-droid.org/packages/io.github.acidefluorhydrique.v2rayng/">
     <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="70" />
   </a>
-  -->
   <a href="https://github.com/AcideFluorhydrique/v2rayNG/releases">
     <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_github.png" alt="Get it on GitHub" height="70" />
   </a>

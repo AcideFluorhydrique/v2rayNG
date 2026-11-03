@@ -32,11 +32,9 @@ v2rayNG 的源代码是公开的，但它的发布版本无法与源代码对照
 可以随时在它们之间切换，无需重新安装。
 
 <p>
-  <!-- 等官方 F-Droid 仓库发布了用「验证」一节中的证书签名的 Forkray 版本后再启用：
-  <a href="https://f-droid.org/packages/io.github.acidefluorhydrique.v2rayng/">
+  <a href="https://cloudflare.f-droid.org/zh_Hans/packages/io.github.acidefluorhydrique.v2rayng/">
     <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="70" />
   </a>
-  -->
   <a href="https://github.com/AcideFluorhydrique/v2rayNG/releases">
     <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_github.png" alt="Get it on GitHub" height="70" />
   </a>
