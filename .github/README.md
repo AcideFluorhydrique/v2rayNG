@@ -53,7 +53,7 @@ reinstalling.
   <a href="https://github.com/AcideFluorhydrique/v2rayNG/releases">
     <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_github.png" alt="Get it on GitHub" height="70" />
   </a>
-  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/AcideFluorhydrique/v2rayNG">
+  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/AcideFluorhydrique/v2rayNG/releases/">
     <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_obtainium.png" alt="Get it on Obtainium" height="70" />
   </a>
 </p>
@@ -99,3 +99,12 @@ are merged and published. The upstream README is kept unchanged in
 [GPL-3.0](../LICENSE), like v2rayNG. The routing data keeps the licences of its
 sources, listed in the app under *About → Open-source licenses* and in
 [forkray-geodata](https://github.com/AcideFluorhydrique/forkray-geodata).
+
+## Star History
+
+<a href="https://star-history.com/#AcideFluorhydrique/v2rayNG&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=AcideFluorhydrique/v2rayNG&type=Date&theme=dark" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=AcideFluorhydrique/v2rayNG&type=Date" />
+  </picture>
+</a>

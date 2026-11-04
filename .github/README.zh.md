@@ -38,7 +38,7 @@ v2rayNG 的源代码是公开的，但它的发布版本无法与源代码对照
   <a href="https://github.com/AcideFluorhydrique/v2rayNG/releases">
     <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_github.png" alt="Get it on GitHub" height="70" />
   </a>
-  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/AcideFluorhydrique/v2rayNG">
+  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/AcideFluorhydrique/v2rayNG/releases">
     <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_obtainium.png" alt="Get it on Obtainium" height="70" />
   </a>
 </p>
@@ -79,3 +79,12 @@ SHA-256: 561d282e03be3557d09073fc317fcc2f4d3231fa26da662e290222f4b34f78d9
 
 与 v2rayNG 相同，采用 [GPL-3.0](../LICENSE)。路由数据保留其来源的许可证，
 列在 app 的“关于 → 开源许可证”中，以及 [forkray-geodata](https://github.com/AcideFluorhydrique/forkray-geodata)。
+
+## Star 历史
+
+<a href="https://star-history.com/#AcideFluorhydrique/v2rayNG&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=AcideFluorhydrique/v2rayNG&type=Date&theme=dark" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=AcideFluorhydrique/v2rayNG&type=Date" />
+  </picture>
+</a>
