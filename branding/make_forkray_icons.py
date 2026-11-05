@@ -35,6 +35,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MAIN_RES = ROOT / "V2rayNG/app/src/main/res"
 FDROID_RES = ROOT / "V2rayNG/app/src/fdroid/res"
 STORE_ICON = "fastlane/metadata/android/en-US/images/icon.png"
+FEATURE_GRAPHIC = "fastlane/metadata/android/en-US/images/featureGraphic.png"
 UPSTREAM_REF = os.environ.get("UPSTREAM_REF", "upstream/master")
 DENSITIES = ["mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi"]
 
@@ -179,6 +180,21 @@ def card_filling_image(src, dst: Path) -> None:
     save(image, dst)
 
 
+def feature_graphic(dst: Path) -> None:
+    """The F-Droid header image: the F in the light card colour, centred on
+    black, so it reads as a banner rather than as the icon a second time.
+    F-Droid requires 1024x500 with no alpha channel, and shows the app's
+    name below it, so the image carries no text."""
+    size = (1024, 500)
+    height = size[1] * 0.56
+    width = height * (V_BOX[2] - V_BOX[0]) / (V_BOX[3] - V_BOX[1])
+    left = (size[0] - width) / 2
+    top = (size[1] - height) / 2
+    image = Image.new("RGB", size, (0, 0, 0))
+    image.paste((253, 253, 253), mask=glyph_mask(size, (left, top, left + width, top + height)))
+    save(image, dst)
+
+
 def redraw_on_transparent(src: Path, dst: Path, colour) -> None:
     """Glyph alone on transparency (adaptive foreground, status bar icon)."""
     original = Image.open(src).convert("RGBA")
@@ -211,6 +227,7 @@ def main() -> None:
             (255, 255, 255, 255),
         )
     card_filling_image(upstream_file(STORE_ICON), ROOT / STORE_ICON)
+    feature_graphic(ROOT / FEATURE_GRAPHIC)
 
 
 if __name__ == "__main__":
