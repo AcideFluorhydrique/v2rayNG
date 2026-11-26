@@ -33,13 +33,16 @@ v2rayNG 的源代码是公开的，但它的发布版本无法与源代码对照
 
 <p>
   <a href="https://cloudflare.f-droid.org/zh_Hans/packages/io.github.acidefluorhydrique.v2rayng/">
-    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="70" />
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-zh-tw.png" alt="Get it on F-Droid" height="70" />
   </a>
   <a href="https://github.com/AcideFluorhydrique/v2rayNG/releases">
-    <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_github.png" alt="Get it on GitHub" height="70" />
+    <img src="https://tachibanagenerallaboratories.github.io/images/badges/GitHub/get-it-on-github.png" alt="Get it on GitHub" height="70" />
   </a>
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/AcideFluorhydrique/v2rayNG/releases">
-    <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_obtainium.png" alt="Get it on Obtainium" height="70" />
+    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/refs/heads/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="70" />
+  </a>
+  <a href="https://www.openapk.net/forkray/io.github.acidefluorhydrique.v2rayng/">
+    <img src="https://www.openapk.net/images/openapk-badge.png" height="70" alt="OpenAPK.net">
   </a>
 </p>
 

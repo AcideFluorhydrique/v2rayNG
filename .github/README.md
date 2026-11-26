@@ -54,7 +54,10 @@ reinstalling.
     <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_github.png" alt="Get it on GitHub" height="70" />
   </a>
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/AcideFluorhydrique/v2rayNG/releases/">
-    <img src="https://raw.githubusercontent.com/mmlado/GapSign/main/assets/badges/badge_obtainium.png" alt="Get it on Obtainium" height="70" />
+    <img src="https://raw.githubusercontent.com/ImranR98/Obtainium/refs/heads/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="70" />
+  </a>
+    <a href="https://www.openapk.net/forkray/io.github.acidefluorhydrique.v2rayng/">
+    <img src="https://www.openapk.net/images/openapk-badge.png" height="70" alt="OpenAPK.net">
   </a>
 </p>
 
